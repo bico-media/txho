@@ -1,4 +1,4 @@
-[![npm](https://img.shields.io/npm/v/txho)](txho)
+[![npm](https://img.shields.io/npm/v/txho)](https://www.npmjs.com/package/txho)
 
 # TXHO - Transaction Hoisted Object
 
