@@ -1,424 +1,540 @@
-# TXO
+[![npm](https://img.shields.io/npm/v/txho)](txho)
 
-> Transaction Object
+# TXHO - Transaction Hoisted Object
 
-TXO translates raw bitcoin transaction into JSON format, which can be:
+![](https://bico.media/b7165ca9baf0e73d53c713b257b856443deff17d0169c840d0fceb6dc97ef4f8)
 
-1. stored in a document database (such as MongoDB) for powerful queries
-2. filtered in realtime using JSON filter libraries (such as JQ)
+TXHO translates raw bitcoin transaction into JSON format while hoisting larger data so you can easily:
 
-![protein](./protein.png)
+- Store context information and content information separately
+- Filter in realtime using JSON filter libraries (such as JQ)
 
-TXO can be used as a standalone tool for quickly making sense of bitcoin raw transactions, and also powers [Planaria](https://docs.planaria.network), which passes the parsed TXO object to event handlers to let programmers build their own API Microservices, such as [BitDB](https://bitdb.network).
-
-
+TXHO can be used as a module for node, from the CLI to make sense of a raw bitcoin transaction or as a processing unit when piping data.
 
 # Installation
 
+For CLI
+
 ```
-npm install --save txo
+npm install txho -g
 ```
 
+As module for node
 
+```
+yarn add txho
+```
 
 # Usage
 
+## CLI
+
+Provide one of the following combinations of parameters
+
+    > txid <txid (64 char long string in hex)>
+
+    > rawtx <raw tx data>
+
+For txid see "fromHash" section for configuration of how to contact a bitcoin node.
+
+You can also pipe in data from a file having one txid or rawtx per line. The output will default to a [nldjson](http://nldjson.org) format (= one json object per line):
+
+> txho rawtx < lostOfRawTxs.txt > output.nldjson
+> cat lostOfTxids.txt | txho txid > output.nldjson
+
+The sequence of the output is **not** guaranteed to be the same as the input. If this is needed xargs is suggested:
+
+> cat lostOfTxids.txt | xargs txho txid >> output.nldjson
+
+## Node
+
 There are two methods:
 
-1. **fromTx:** Generates JSON from raw transaction (Local operation and doesn't require a bitcoin node)
-2. **fromHash:** Generates JSON from transaction hash. (requires a local bitcoin node for JSON-RPC)
+1. **fromTx:** Generates JSON from raw transaction data (Local operation and doesn't require a bitcoin node)
+2. **fromHash:** Generates JSON from transaction hash. (requires a bitcoin node for JSON-RPC)
 
-
-
-## 1. fromTx
+### fromTx
 
 Generate JSON from raw transaction string.
 
-The following code does the same thing as the `fromHash` example above, but doesn't require a bitcoin node since it's directly transforming from raw transaction.
+Example
 
-```
-const txo = require('txo');
-(async function() {
-  let result = await txo.fromTx("0100000001d5001345e77e66fa74f0012a81017ea1223c7a8adbcc9e37f2860f95ba97966d000000006b483045022100c1a0c5ffc5b78e39acb5be1438e28a10e5aac8337f5da7e4c25ba4c5f3eb01b5022050e9997bae423585da52d7cdc8951379f5bff07adb6756ffe70e7c7181f8a5bd4121032b345f89620af75f59aa91d47cc359e4dd907816ce0652604922726025712f52ffffffff024a976200000000001976a914c6187747f80b85170eef7013218e7b0fa441479988ac44033f00000000001976a9147e4616b7453185a5f071417bb4ac08e226dbef9888ac00000000")
-  console.log(result)
+```js
+const txho = require('txho');
+(async function () {
+	let result = await txho.fromTx(
+		'0100000001d5001345e77e66fa74f0012a81017ea1223c7a8adbcc9e37f2860f95ba97966d000000006b483045022100c1a0c5ffc5b78e39acb5be1438e28a10e5aac8337f5da7e4c25ba4c5f3eb01b5022050e9997bae423585da52d7cdc8951379f5bff07adb6756ffe70e7c7181f8a5bd4121032b345f89620af75f59aa91d47cc359e4dd907816ce0652604922726025712f52ffffffff024a976200000000001976a914c6187747f80b85170eef7013218e7b0fa441479988ac44033f00000000001976a9147e4616b7453185a5f071417bb4ac08e226dbef9888ac00000000'
+	);
+	console.log(result);
 })();
 ```
 
-You can also pass an additional argument `{ h: true }` to ask for `h` attributes (hex encoded version of each pushdata) You can learn more about how each push data chunk is represented on the [script section](https://github.com/interplanaria/txo#level-2-script).
+### fromHash
 
-```
-const txo = require('txo');
-(async function() {
-  let result = await txo.fromTx(
-    "0100000001d5001345e77e66fa74f0012a81017ea1223c7a8adbcc9e37f2860f95ba97966d000000006b483045022100c1a0c5ffc5b78e39acb5be1438e28a10e5aac8337f5da7e4c25ba4c5f3eb01b5022050e9997bae423585da52d7cdc8951379f5bff07adb6756ffe70e7c7181f8a5bd4121032b345f89620af75f59aa91d47cc359e4dd907816ce0652604922726025712f52ffffffff024a976200000000001976a914c6187747f80b85170eef7013218e7b0fa441479988ac44033f00000000001976a9147e4616b7453185a5f071417bb4ac08e226dbef9888ac00000000",
-    { h: true }
-  )
-  console.log(result)
-})();
-```
+The `fromHash` method needs to contact a bitcoin node to use JSON-RPC, therefore you need to have access to a JSON-RPC endpoint.
 
+The first step is to make a `.env` file
 
-## 2. fromHash
-
-The `fromHash` method utilizes Bitcoin's JSON-RPC, therefore you need to have access to a JSON-RPC endpoint.
-
-The first step is to update the `.env` file
-
-```
+```bash
 BITCOIN_USERNAME=[Bitcoin Node Username]
 BITCOIN_PASSWORD=[Bitcoin Node Password]
 BITCOIN_IP=[Bitcoin Node IP]
 BITCOIN_PORT=[Bitcoin Node Port]
 ```
 
-Then, we can generate TXO from transaction hash:
+Then, we can get the JSON representation of the transactoin like this:
 
-```
-const txo = require('txo');
-(async function() {
-  let result = await txo.fromHash("45c6113bb1ecddc976131022bc80f46684d8956ab1a7bb5fc5625b5f7a930438")
-  console.log(result)
+```js
+const txho = require('txho');
+(async function () {
+	let result = await txho.fromHash(
+		'45c6113bb1ecddc976131022bc80f46684d8956ab1a7bb5fc5625b5f7a930438'
+	);
+	console.log(result);
 })();
 ```
 
-prints:
+# The output
 
-```
+TXHO outputs a JSON object that represents a transaction. Large data is hoisted from the main structure and placed next to it so that it's easy to manage large data in different ways while still keeping the references to ensure consistency.
+
+Please note that the structure of the default JSON output from TXHO is similar but not equal to the output from [TXO](https://github.com/interplanaria/txo) library or the related MOM notation. You can, however, get the original structure by providing the config variable `txo` with the configuration you normally provide TXO. The TXO functionality has been included to leverage the ability to pipe data.
+
+High level format of the output:
+
+```bash
 {
   "tx": {
-    "h": "45c6113bb1ecddc976131022bc80f46684d8956ab1a7bb5fc5625b5f7a930438",
-    "r": "0100000001932af0ab2a31ff4ac5454f4e3c71eaf137e11af8a658e590174d5da52612ecb6010000006b4830450221008892b5a2325c06c51a6b7a027432b681d02d11ba827b3e8212fad5297bfb09c20220569cf8ec522572761f0b5f885034a213c4e274c836736f45bbda78f4de1f6f1a412103b0127dc8d784b6925edbea960d4367d050fc0bd15a4a30a850c7d7787c3dd8a3ffffffff020000000000000000fd09016a067374617475734cff7b2276657273696f6e223a22302e312e30222c2274696d657374616d70223a313535313231343734312c2264617461223a7b22627376223a7b227072696365223a37332e35332c2274785f6e756d5f323468223a353330337d2c22626368223a7b227072696365223a3133312e37392c2274785f6e756d5f323468223a31333239347d2c22627463223a7b227072696365223a333831372e37312c2274785f6e756d5f323468223a3333333434307d7d2c22736f75726365223a7b227072696365223a2268747470733a2f2f6269746b616e2e636f6d222c2274785f6e756d5f323468223a2268747470733a2f2f626c6f636b63686169722e636f6d227d7d383d2200000000001976a914d330a4778ee282f5f3ed9cb2df1efbac198a970888ac00000000"
+    "txid": [Transaction hash],
+    "input": [    // an array with an object per input
+      {
+        "origin": {
+          "txid": [Transaction h where this input originated]
+          "iOut": [Index that this input had in the transactoin where it originated]
+          "address": [base58 representation of the public key of the sender (the address)]
+        },
+        "payload": [ // an array with an object per output
+          {
+            "b64": [All data defaults to base64 (see more about configuration)]
+          },
+          {
+            "op": [If data is an OP code the property "op" will include the opcode]
+			"opName": [string with the name of the opcode]
+          },
+          {        // if data is larger than includeDataMax (defaults to 512)
+            "size": [number of bytes]
+            "sha256": [hash of content],
+            "bitfs": [a reference in [bitfs](bitfs.network) notation to identify data in the property data]
+            }
+          }
+        ]
+      }
+    ],
+    "output": [
+      {
+		"value": [Amount of sathoshi in the output]
+		"address": [receiver address]
+        "payload": [ // an array with an object per output (same as input)
+          ...
+        ],
+        "split": [ // an array with arrays of sections split up by the delimiters like  OP_RETURN and the pipe |. Same idea as the BOB format.
+          [  // First section - could forexample be a B:// format
+            {
+              ... objects like in paload
+            }
+          ],
+          [  // second section- could forexample be a signing AIM protocol
+            {
+              ... object like in paload
+            }
+          ]
+        ]
+      }
+    ]
   },
-  "in": [
+  data:[
     {
-      "i": 0,
-      "b0": "MEUCIQCIkrWiMlwGxRpregJ0MraB0C0RuoJ7PoIS+tUpe/sJwgIgVpz47FIlcnYfC1+IUDSiE8TidMg2c29Fu9p49N4fbxpB",
-      "b1": "A7ASfcjXhLaSXtvqlg1DZ9BQ/AvRWkowqFDH13h8Pdij",
-      "str": "30450221008892b5a2325c06c51a6b7a027432b681d02d11ba827b3e8212fad5297bfb09c20220569cf8ec522572761f0b5f885034a213c4e274c836736f45bbda78f4de1f6f1a41 03b0127dc8d784b6925edbea960d4367d050fc0bd15a4a30a850c7d7787c3dd8a3",
-      "e": {
-        "h": "b6ec1226a55d4d1790e558a6f81ae137f1ea713c4e4f45c54aff312aabf02a93",
-        "i": 1,
-        "a": "1LFfrDM27KXeUn1xH9NTknWHexTxqiEcnF"
-      }
-    }
-  ],
-  "out": [
-    {
-      "i": 0,
-      "b0": {
-        "op": 106
-      },
-      "b1": "c3RhdHVz",
-      "s1": "status",
-      "b2": "eyJ2ZXJzaW9uIjoiMC4xLjAiLCJ0aW1lc3RhbXAiOjE1NTEyMTQ3NDEsImRhdGEiOnsiYnN2Ijp7InByaWNlIjo3My41MywidHhfbnVtXzI0aCI6NTMwM30sImJjaCI6eyJwcmljZSI6MTMxLjc5LCJ0eF9udW1fMjRoIjoxMzI5NH0sImJ0YyI6eyJwcmljZSI6MzgxNy43MSwidHhfbnVtXzI0aCI6MzMzNDQwfX0sInNvdXJjZSI6eyJwcmljZSI6Imh0dHBzOi8vYml0a2FuLmNvbSIsInR4X251bV8yNGgiOiJodHRwczovL2Jsb2NrY2hhaXIuY29tIn19",
-      "s2": "{\"version\":\"0.1.0\",\"timestamp\":1551214741,\"data\":{\"bsv\":{\"price\":73.53,\"tx_num_24h\":5303},\"bch\":{\"price\":131.79,\"tx_num_24h\":13294},\"btc\":{\"price\":3817.71,\"tx_num_24h\":333440}},\"source\":{\"price\":\"https://bitkan.com\",\"tx_num_24h\":\"https://blockchair.com\"}}",
-      "str": "OP_RETURN 737461747573 7b2276657273696f6e223a22302e312e30222c2274696d657374616d70223a313535313231343734312c2264617461223a7b22627376223a7b227072696365223a37332e35332c2274785f6e756d5f323468223a353330337d2c22626368223a7b227072696365223a3133312e37392c2274785f6e756d5f323468223a31333239347d2c22627463223a7b227072696365223a333831372e37312c2274785f6e756d5f323468223a3333333434307d7d2c22736f75726365223a7b227072696365223a2268747470733a2f2f6269746b616e2e636f6d222c2274785f6e756d5f323468223a2268747470733a2f2f626c6f636b63686169722e636f6d227d7d",
-      "e": {
-        "v": 0,
-        "i": 0,
-        "a": "false"
-      }
+      "size": [bytesize]
+      "sha256": [hash],
+      "b64": [data base 64 encoded],
+      "bitfs": [The ref],
+      "txid": [transaction hash of this transaction],
+      "type": [input or output],
+      "iScript": [index amongst input or output],
+      "iChunk": [index in the input or output ]
     },
-    {
-      "i": 1,
-      "b0": {
-        "op": 118
-      },
-      "b1": {
-        "op": 169
-      },
-      "b2": "0zCkd47igvXz7Zyy3x77rBmKlwg=",
-      "s2": "�0�w����휲�\u001e��\u0019��\b",
-      "b3": {
-        "op": 136
-      },
-      "b4": {
-        "op": 172
-      },
-      "str": "OP_DUP OP_HASH160 d330a4778ee282f5f3ed9cb2df1efbac198a9708 OP_EQUALVERIFY OP_CHECKSIG",
-      "e": {
-        "v": 2243896,
-        "i": 1,
-        "a": "1LFfrDM27KXeUn1xH9NTknWHexTxqiEcnF"
-      }
-    }
-  ],
-  "confirmations": 1
-}
-```
-
-
-
----
-
-
-
-# Schema
-
-The main job of TXO is to take a raw Bitcoin transaction and transform it into a structured format on top of which we can run all kinds of powerful query, processing, and filter.
-
-
-
-## 1. How TXO parses Bitcoin Transactions
-
-We can think of each bitcoin transaction as a DNA that needs to be expressed into a meaningful protein.
-
-![protein](./protein.png)
-
-For example, here's a raw transaction:
-
-```
-0100000001b08acdbdad97ad6670c83cee6794bfbd1e9bb1220b9e6b3116b754bca2459326010000006a47304402201c6039241540945c8c65f3d3ba116dd7b77ea2ca89afac33ef49a8bfa66dafef022035f906ffc1a12613cab7ee1ec9443674f594039c09fce6e59b4f1781e18086f8412103d6d364d31666821548044723f6a8b15f43e6c7dc5edcc2fc3cf7831b3e81095cffffffff020000000000000000176a026d0212706f737420746f206d656d6f2e636173682108420000000000001976a91419b26abab87de1a5d07d34a12f232f5b75c7caf188ac00000000
-```
-
-If we deserialize it into a readable format, it has one input script, and two output scripts:
-
-```
-# INPUT:
-71 0x304402201c6039241540945c8c65f3d3ba116dd7b77ea2ca89afac33ef49a8bfa66dafef022035f906ffc1a12613cab7ee1ec9443674f594039c09fce6e59b4f1781e18086f841 33 0x03d6d364d31666821548044723f6a8b15f43e6c7dc5edcc2fc3cf7831b3e81095c
-
-# OUTPUT:
-OP_RETURN 2 0x6d02 18 0x706f737420746f206d656d6f2e6361736821
-OP_DUP OP_HASH160 20 0x19b26abab87de1a5d07d34a12f232f5b75c7caf1 OP_EQUALVERIFY OP_CHECKSIG
-```
-
-This deserialized format is readable but still just one dimensional, therefore not easy to process or filter. We need to transform this into a more structured two dimensional format with query-able attributes, along with additional metadata such as transaction hash and block information including `blk.i` (block index), `blk.h` (block hash), `blk.t` (block time):
-
-```
-{
-  "tx": {
-    "h": "92b87fc7390dff0ccfc43469ce90a8d3dbc20e752fdd5cbde55a6d89e230cdf5"
-  },
-  "blk": {
-    "i": 546492,
-    "h": "000000000000000000d3ad1ddba37d2d82cd50246e8ed20ee4bbea235d066e25",
-    "t": 1536117057
-  },
-  "in": [
-    {
-      "i": 0,
-      "b0": "MEQCIBxgOSQVQJRcjGXz07oRbde3fqLKia+sM+9JqL+mba/vAiA1+Qb/waEmE8q37h7JRDZ09ZQDnAn85uWbTxeB4YCG+EE=",
-      "b1": "A9bTZNMWZoIVSARHI/aosV9D5sfcXtzC/Dz3gxs+gQlc",
-      "str": "<Script: 71 0x304402201c6039241540945c8c65f3d3ba116dd7b77ea2ca89afac33ef49a8bfa66dafef022035f906ffc1a12613cab7ee1ec9443674f594039c09fce6e59b4f1781e18086f841 33 0x03d6d364d31666821548044723f6a8b15f43e6c7dc5edcc2fc3cf7831b3e81095c>",
-      "e": {
-        "h": "269345a2bc54b716316b9e0b22b19b1ebdbf9467ee3cc87066ad97adbdcd8ab0",
-        "i": 1,
-        "a": "qqvmy646hp77rfws0562zter9adht3727yu7kf3sls"
-      }
-    }
-  ],
-  "out": [
-    {
-      "i": 0,
-      "b0": {
-        "op": 106
-      },
-      "b1": "bQI=",
-      "s1": "m\u0002",
-      "b2": "cG9zdCB0byBtZW1vLmNhc2gh",
-      "s2": "post to memo.cash!",
-      "str": "<Script: OP_RETURN 2 0x6d02 18 0x706f737420746f206d656d6f2e6361736821>",
-      "e": {
-        "v": 0,
-        "i": 0
-      }
-    },
-    {
-      "i": 1,
-      "b0": {
-        "op": 118
-      },
-      "b1": {
-        "op": 169
-      },
-      "b2": "GbJqurh94aXQfTShLyMvW3XHyvE=",
-      "s2": "\u0019�j��}��}4�/#/[u���",
-      "b3": {
-        "op": 136
-      },
-      "b4": {
-        "op": 172
-      },
-      "str": "<Script: OP_DUP OP_HASH160 20 0x19b26abab87de1a5d07d34a12f232f5b75c7caf1 OP_EQUALVERIFY OP_CHECKSIG>",
-      "e": {
-        "v": 16904,
-        "i": 1,
-        "a": "qqvmy646hp77rfws0562zter9adht3727yu7kf3sls"
-      }
-    }
   ]
-}
-```
-
-
-
-We can use this object for various purposes.
-
-1. Store it in a document database as a row (Such as MongoDB)
-2. Filter it using JSON processing engiens (Such as JQ)
-
-
-
-In the sections below, we'll take a look at each attribute of this document format. There are three levels:
-
-1. **Transaction:** The top level object contains **tx**, **blk**, **in**, and **out**.
-2. **Script:** **in** represents input scripts, and **out** represents output scripts. These are the core of every transaction as they contain the actual algorithm of each transaction.
-3. **Graph:** Each item in the **in** and **out** arrays has an attribute called **e** (stands for "edge") which contains the graph structure of each transaction.
-   1. **in.e:** (the **e** attribute inside an **in** item) means "incoming edge". It represents the previous linked transaction.
-   2. **out.e:** (the **e** attribute inside an **out** item) means "outgoing edge". It represents the next linked transaction.
-
-Let's walk through the entire document to see how each level is structured:
-
-
-
-## 2. TXO (Transaction Object)
-
-
-
-### Level 1. Transaction
-
-TXO represents a transaction as a JSON object, which follows the following high level format:
-
-```
-{
-  "tx": {
-    "h": [TRANSACTION HASH],
-    "r": [RAW TRANSACTION] 
-  },
-  "blk" {
-    "i": [BLOCK INDEX],
-    "h": [BLOCK HASH],
-    "t": [BLOCK TIME]
-  },
-  "in": [
-    INPUT1,
-    INPUT2,
-    INPUT3,
-    ...
-  ],
-  "out": [
-    OUTPUT1,
-    OUTPUT2,
-    OUTPUT3,
-    ...
-  ],
-  "coinbase": [COINBASE]
-}
-```
-
-This is the top level view of what each transaction looks like when it's interpreted by TXO.
-
-- **tx** (short for "transaction"): contains **h** attribute, which is the transaction hash.
-- **blk** (short for "block"): contains **i** (block index), **h** (block hash), **t** (block time).
-
-We will discuss the INPUT and OUTPUT script objects in detail in the next section.
-
-
-
-### Level 2. Script
-
-Each input and output is essentially a Bitcoin script. We will need to transform a 1-dimensional Bitcoin script that looks like this:
-
-```
-OP_DUP OP_HASH160 20 0xfe686b9b2ab589a3cb3368d02211ca1a9b88aa42 OP_EQUALVERIFY OP_CHECKSIG
-```
-
-into this:
-
-```
-{
-  "i": 0,
-  "b0": {
-    "op": 118
-  },
-  "b1": {
-    "op": 169
-  },
-  "b2": "/mhrmyq1iaPLM2jQIhHKGpuIqkI=",
-  "s2": "�hk�*����3h�\"\u0011�\u001a���B",
-  "b3": {
-    "op": 136
-  },
-  "b4": {
-    "op": 172
-  },
-  "str": "<Script: OP_DUP OP_HASH160 20 0xfe686b9b2ab589a3cb3368d02211ca1a9b88aa42 OP_EQUALVERIFY OP_CHECKSIG>",
-  "e": {
-    "v": 459046,
-    "i": 0,
-    "a": "qrlxs6um926cng7txd5dqgs3egdfhz92ggrzlp5vsy"
   }
 }
 ```
 
-Here's what each attribute means and how they're constructed:
+# Configuration of the output
 
-- **i:** The index of the current script within its parent transaction. One transaction can contain many input/outputs and all input/outputs are ordered within the transaction. This field describes the index of the current script input/output's index.
-- **b0, b1, b2, ... :** base64 encoded representation of each push data. There are two rules:
-  - **If a push data is an opcode,** it's stored as a JSON object with a single key "op" and its value which corresponds to Bitcoin opcode (Bitcoin opcode table) - (Example: `{ "b0": { "op": 106 } }` is an OP_RETURN opcode)
-  - **If a push data is a non-opcode,** it's stored as a base64 encoded string
-- **lb0, lb1, lb2, ...**: base64 encoded representation (Same as b0, b1, b2) BUT ONLY when the push data size is **larger than 512 bytes**. A pushdata is always stored as either a `b` variable or `lb` variable, depending on the size. [Learn more](https://medium.com/@_unwriter/l-is-for-large-6e632280c5e3) 
-- **s0, s1, s2, ... :** UTF8 encoded representation of each push data. Used for full text search as well as simple string matching. Only stored if the push data is not an opcode.
-- **ls0, ls1, ls2, ...**: UTF8 encoded representation (Same as s0, s1, s2) BUT ONLY when the push data size is **larger than 512 bytes**. A pushdata is always stored as either a `s` variable or `ls` variable, depending on the size. [Learn more](https://medium.com/@_unwriter/l-is-for-large-6e632280c5e3)
-- **str**: Full string representation of the script
-- **e**: (for inputs) Stands for "graph edge". An array of previous outputs linking to the current transaction. More in the next section.
-  - **h**: The hash of the transaction that contains the previous output.
-  - **i**: The index of the previous output within its transaction output set.
-  - **a**: The sender address in case it can be parsed into an address
-- **e**: (for outputs) Stands for "graph edge". An array of all outgoing outputs from the current transaction. More in the next section.
-  - **v**: The amount of satoshis sent
-  - **i**: The output index within the transaction
-  - **a**: The receiver address if the output is linking to an address
+The output can be adjusted with the following configuration via cli:
 
+```js
+   --network: string,         // main or test
+   --maxDataSize: number,     // What is the max size of data not hosted. Defaults to 512. If 0 no data is hoisted
+   --cellB64: flag;           // Aways add a base 64 representation of data to each cell. Default true
+   --cellStr: flag;           // Aways add a string representation of data to each cell. Default false
+   --cellHex: flag;           // Aways add a hex representation of data to each cell. Default false
+   --cellHash: flag;          // Aways add a buffer containing a data to each cell. Default false
+   --cellAuto: flag;          // Try to guess the most human readable format of str/hex/b64. Will add iso representatoin of utc if string looks like a timestamp
+   --cellAll: flag;           // Same as setting cellB63, cellStr, cellHex, cellHash and cellAuto to true
+   --cellBuf: flag;           // Aways add a buffer containing a data to each cell. Default false
+   --compress: flag;          // Compress the output to one line. Default false. If data is piped: default true.
+   --only: string             // Comma seperated list of dot-notated elements to only include in output (like --only=tx.txid,data.sha256)
+   --hide: string             // Comma seperated list of dot-notated elements to explude from output (like --hide=data.b64). Overruled by "only"
+   --skip: number             // For piped data only: how many lines to skip before starting to execute.
+   --txo: object              // The inside of a config object to initiate a TXO output.
+   --pool: object;            // The inside of a config object to manage the pool size of rpc requests: See more about chiqq on npm.
+                              // Is merged with default: --pool=concurrency:5,retryMax:3,retryCooling:1000,retryFactor:2
+```
 
+and following configuration via node:
 
-### Level 3. Graph
-
-In this section we will take a look at **e** (edge).
-
-There are two edges: **in.e** (input edge) and **out.e** (output edge)
-
-These represent the edges between transactions, one transaction linking to another. Let's take a look at an example to explain these concepts. We'll focus on TX B from the following diagram:
-
-![graph](./graph.png)
-
-1. TX B (Transaction B) has 3 inputs and 1 output.
-2. The first input of 0.5 BSV comes from Bob
-3. If we take a look at the part where Bob sends 0.5 BSV to Alice (under "Bob spends") we can see that the 0.5 BSV to Alice is the first output in the transaction (index: 0)
+```js
+   network: string,         // main or test
+   maxDataSize: number,     // What is the max size of data not hosted. Defaults to 512. If 0 no data is hoisted
+   cellB64: flag;           // Aways add a base 64 representation of data to each cell. Default true
+   cellStr: flag;           // Aways add a string representation of data to each cell. Default false
+   cellHex: flag;           // Aways add a hex representation of data to each cell. Default false
+   cellHash: flag;          // Aways add a buffer containing a data to each cell. Default false
+   cellAuto: flag;          // Try to guess the most human readable format of str/hex/b64. Will add iso representatoin of utc if string looks like a timestamp
+   cellAll: flag;           // Same as setting cellB63, cellStr, cellHex, cellHash and cellAuto to true
+   cellBuf: flag;           // Aways add a buffer containing a data to each cell. Default false
+   compress: boolean;       // Compress the output to one line. Default false. If data is piped: default true.
+   only: string             // Comma seperated list of dot-notated elements to only include in output (like --only=tx.txid,data.sha256)
+   hide: string             // Comma seperated list of dot-notated elements to explude from output (like --hide=data.b64). Overruled by "only"
+   txo: object              // The inside of a config object to initiate a TXO output.
+   pool: object;            // Config object to manage the pool size of rpc requests: See more about chiqq on npm.
+							// Is merged with {concurrency:5,retryMax:3,retryCooling:1000,retryFactor:2}
+   splitDelimiter: fn       // function to indicate if elements is delimiter
+                            // defaults to: (e) => atobPipe === e.b64 || OP.RETURN === e.op || OP.FALSE === e.op,
 
 ```
+
+# Example
+
+Here is an example for the CLI that makes it easy to skim what is going on in the OP_RETURN data
+
+```
+$ txho txid c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169 --cellAuto --only=tx.out.split
+```
+
+returns
+
+```json
 {
-  "in": [{
-    ...
-    "e": {
-      "a": [Bob address],
-      "h": [TX A HASH],
-      "i": 0
-    }
-    ...
-  }]
+	"tx": {
+		"out": [
+			{
+				"split": [
+					[
+						{
+							"str": "19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut"
+						},
+						{
+							"size": 39011,
+							"sha256": "24066cd470667f0358ea48430c77e4e849cf637c8e491af2df14a260137d43d5"
+						},
+						{
+							"str": "text/html"
+						},
+						{
+							"str": "gzip"
+						},
+						{
+							"str": "https://www.bbc.com/news/technology-52388586"
+						}
+					],
+					[
+						{
+							"str": "1PuQa7K62MiKCtssSLKy1kh56WWU7MtUR5"
+						},
+						{
+							"str": "SET"
+						},
+						{
+							"str": "date"
+						},
+						{
+							"utc": "2020-04-23T22:27:25.906Z",
+							"str": "1587680845906"
+						},
+						{
+							"str": "source"
+						},
+						{
+							"str": "https://etched.page"
+						}
+					],
+					[
+						{
+							"str": "15PciHG22SNLQJXMoSUaWVi7WSqc7hCfva"
+						},
+						{
+							"str": "BITCOIN_ECDSA"
+						},
+						{
+							"str": "1ChMHjgVPHmbRsgBH9JoaCZbnEvVsXsSdx"
+						},
+						{
+							"b64": "IDjjAOmdyrv+TtF/4LTfbzKfZzEV84SG7Zh9791WW3opKU21o17jxiScJ3e4lSc1Pb83rci+6M6Ki7MMhgHoFdA="
+						}
+					]
+				]
+			},
+			{
+				"split": [
+					[
+						{
+							"opName": "OP_DUP",
+							"op": 118
+						},
+						{
+							"opName": "OP_HASH160",
+							"op": 169
+						},
+						{
+							"b64": "E6MFcxM1ofaigmfCWxo53zpEG2Y="
+						},
+						{
+							"opName": "OP_EQUALVERIFY",
+							"op": 136
+						},
+						{
+							"opName": "OP_CHECKSIG",
+							"op": 172
+						}
+					]
+				]
+			}
+		]
+	}
 }
 ```
 
-Basically the sender object represents the output of the previous transaction this input is connected to.
+---
 
-Coming back to TX B and looking at its output, there seems to be only 1 output that pays out 0.8 BSV.
+An example with a call from node with default parameters
 
+```js
+const txho = require('txho');
+(async function () {
+	let result = await txho.fromHash(
+		'c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169'
+	);
+	console.log(result);
+})();
 ```
+
+The output will be:
+
+```json
 {
-  "out": [{
-    ...
-    "e": {
-      "a": [Alice's employee address],
-      "v": 80000000,
-      "i": 0
-    }
-    ...
-  }]
+	"tx": {
+		"txid": "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169",
+		"lockTime": 0,
+		"in": [
+			{
+				"seq": 4294967295,
+				"origin": {
+					"txid": "f2f85e6e75f00ebeed2d9b2ea99e7b314190ebd4a755faa157109bec26c41422",
+					"iOut": 1,
+					"address": "12nq8ZcrpY6tVkuPzuW9sg4a76feLMHUaN"
+				},
+				"payload": [
+					{
+						"b64": "MEQCIGxTaQAfazTcb+fGB3Ycs5a7okXgY3YU28Snz2kfX/niAiBi97GfrwART2kp43GmRw4KYJxpmEme79DHZIUxPFHkpEE="
+					},
+					{
+						"b64": "AzGNaeKeZmKIBy92zsQ+QkMCkQnrPyBd8fTXq1E3UrqN"
+					}
+				]
+			}
+		],
+		"out": [
+			{
+				"value": 0,
+				"payload": [
+					{
+						"opName": "OP_FALSE",
+						"op": 0
+					},
+					{
+						"opName": "OP_RETURN",
+						"op": 106
+					},
+					{
+						"b64": "MTlIeGlnVjRReUJ2M3RIcFFWY1VFUXlxMXB6WlZkb0F1dA=="
+					},
+					{
+						"size": 39011,
+						"sha256": "24066cd470667f0358ea48430c77e4e849cf637c8e491af2df14a260137d43d5"
+					},
+					{
+						"b64": "dGV4dC9odG1s"
+					},
+					{
+						"b64": "Z3ppcA=="
+					},
+					{
+						"b64": "aHR0cHM6Ly93d3cuYmJjLmNvbS9uZXdzL3RlY2hub2xvZ3ktNTIzODg1ODY="
+					},
+					{
+						"b64": "fA=="
+					},
+					{
+						"b64": "MVB1UWE3SzYyTWlLQ3Rzc1NMS3kxa2g1NldXVTdNdFVSNQ=="
+					},
+					{
+						"b64": "U0VU"
+					},
+					{
+						"b64": "ZGF0ZQ=="
+					},
+					{
+						"b64": "MTU4NzY4MDg0NTkwNg=="
+					},
+					{
+						"b64": "c291cmNl"
+					},
+					{
+						"b64": "aHR0cHM6Ly9ldGNoZWQucGFnZQ=="
+					},
+					{
+						"b64": "fA=="
+					},
+					{
+						"b64": "MTVQY2lIRzIyU05MUUpYTW9TVWFXVmk3V1NxYzdoQ2Z2YQ=="
+					},
+					{
+						"b64": "QklUQ09JTl9FQ0RTQQ=="
+					},
+					{
+						"b64": "MUNoTUhqZ1ZQSG1iUnNnQkg5Sm9hQ1pibkV2VnNYc1NkeA=="
+					},
+					{
+						"b64": "IDjjAOmdyrv+TtF/4LTfbzKfZzEV84SG7Zh9791WW3opKU21o17jxiScJ3e4lSc1Pb83rci+6M6Ki7MMhgHoFdA="
+					}
+				],
+				"split": [
+					[
+						{
+							"b64": "MTlIeGlnVjRReUJ2M3RIcFFWY1VFUXlxMXB6WlZkb0F1dA=="
+						},
+						{
+							"size": 39011,
+							"sha256": "24066cd470667f0358ea48430c77e4e849cf637c8e491af2df14a260137d43d5"
+						},
+						{
+							"b64": "dGV4dC9odG1s"
+						},
+						{
+							"b64": "Z3ppcA=="
+						},
+						{
+							"b64": "aHR0cHM6Ly93d3cuYmJjLmNvbS9uZXdzL3RlY2hub2xvZ3ktNTIzODg1ODY="
+						}
+					],
+					[
+						{
+							"b64": "MVB1UWE3SzYyTWlLQ3Rzc1NMS3kxa2g1NldXVTdNdFVSNQ=="
+						},
+						{
+							"b64": "U0VU"
+						},
+						{
+							"b64": "ZGF0ZQ=="
+						},
+						{
+							"b64": "MTU4NzY4MDg0NTkwNg=="
+						},
+						{
+							"b64": "c291cmNl"
+						},
+						{
+							"b64": "aHR0cHM6Ly9ldGNoZWQucGFnZQ=="
+						}
+					],
+					[
+						{
+							"b64": "MTVQY2lIRzIyU05MUUpYTW9TVWFXVmk3V1NxYzdoQ2Z2YQ=="
+						},
+						{
+							"b64": "QklUQ09JTl9FQ0RTQQ=="
+						},
+						{
+							"b64": "MUNoTUhqZ1ZQSG1iUnNnQkg5Sm9hQ1pibkV2VnNYc1NkeA=="
+						},
+						{
+							"b64": "IDjjAOmdyrv+TtF/4LTfbzKfZzEV84SG7Zh9791WW3opKU21o17jxiScJ3e4lSc1Pb83rci+6M6Ki7MMhgHoFdA="
+						}
+					]
+				]
+			},
+			{
+				"value": 925636,
+				"address": "12nq8ZcrpY6tVkuPzuW9sg4a76feLMHUaN",
+				"payload": [
+					{
+						"opName": "OP_DUP",
+						"op": 118
+					},
+					{
+						"opName": "OP_HASH160",
+						"op": 169
+					},
+					{
+						"b64": "E6MFcxM1ofaigmfCWxo53zpEG2Y="
+					},
+					{
+						"opName": "OP_EQUALVERIFY",
+						"op": 136
+					},
+					{
+						"opName": "OP_CHECKSIG",
+						"op": 172
+					}
+				],
+				"split": [
+					[
+						{
+							"opName": "OP_DUP",
+							"op": 118
+						},
+						{
+							"opName": "OP_HASH160",
+							"op": 169
+						},
+						{
+							"b64": "E6MFcxM1ofaigmfCWxo53zpEG2Y="
+						},
+						{
+							"opName": "OP_EQUALVERIFY",
+							"op": 136
+						},
+						{
+							"opName": "OP_CHECKSIG",
+							"op": 172
+						}
+					]
+				]
+			}
+		]
+	},
+	"data": [
+		{
+			"size": 39011,
+			"sha256": "24066cd470667f0358ea48430c77e4e849cf637c8e491af2df14a260137d43d5",
+			"b64": "H4sIAAAAAAACA+y9aWPb.... lots of data ....HTeOYdsnu5//4/hRkEpDO0AgA=",
+			"bitfs": "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169.out.0.3",
+			"txid": "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169",
+			"type": "out",
+			"iScript": 0,
+			"iChunk": 3
+		}
+	]
 }
 ```
-
-Note that 0.8 BSV equals to 80,000,000 satoshis, which is why v is 80,000,000. And since the output only has one item, the index of the output is 0.
-
-
-

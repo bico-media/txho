@@ -1,2 +1,8 @@
 .env
 node_modules
+dist/
+out.txt
+output.txt
+out.json
+output.json
+input.txt
