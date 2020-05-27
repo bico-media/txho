@@ -7,7 +7,7 @@ export interface TxCell {
 	utc?: string;
 	sha256?: string;
 	hex?: string;
-	bitfs?: string;
+	uri?: string;
 	buf?: any;
 	display?: TxCell;
 }
@@ -16,7 +16,7 @@ export interface TxRef {
 	size: number;
 	b64: string;
 	sha256: string;
-	bitfs?: string;
+	uri?: string;
 	txid?: string;
 	type?: string;
 	iScript?: number;

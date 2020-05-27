@@ -1,7 +1,7 @@
 {
 	"name": "txho",
 	"version": "1.0.1",
-	"description": "Transaction Hoisted Object",
+	"description": "Get a Bitcoin transaction as JSON for CLI and node",
 	"main": "dist/index.js",
 	"bin": {
 		"txho": "./dist/index.js"
@@ -13,7 +13,7 @@
 		"url": "https://github.com/bicomedia/txho.git"
 	},
 	"scripts": {
-		"go": "ts-node index.ts",
+		"go": "ts-node src/index.ts",
 		"test": "echo Tests are not automated yet",
 		"build": "tsc src/index.ts --outDir dist/",
 		"prepublishOnly": "yarn build && yarn bump",
@@ -22,8 +22,7 @@
 	},
 	"dependencies": {
 		"bitcoind-rpc": "0.8.1",
-		"bsv": "1.5.3",
-		"chiqq": "0.1.2",
+		"bsv": "1.2.0",
 		"dotenv": "8.2.0",
 		"global": "4.4.0",
 		"json5": "2.1.3",
@@ -36,13 +35,13 @@
 		"version-bump-prompt": "6.0.3"
 	},
 	"keywords": [
-		"bitcoin",
-		"bitcoin sv",
-		"BSV",
 		"txo",
 		"txid",
+		"bitfs",
 		"bitwork",
-		"bitfs"
+		"BSV",
+		"bitcoin sv",
+		"bitcoin"
 	],
 	"prettier": {
 		"useTabs": true,

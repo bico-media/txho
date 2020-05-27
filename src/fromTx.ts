@@ -60,7 +60,7 @@ export default function (transaction, config: TxConf = defaultTxConfig) {
 			in: [],
 			out: [],
 		};
-		let bitfs = [];
+		let uri = [];
 
 		txData.inputs?.forEach(function (input, inputIndex) {
 			if (!input.script) {
@@ -70,10 +70,10 @@ export default function (transaction, config: TxConf = defaultTxConfig) {
 			let payload = input.script.chunks.map(function (c, chunkIndex) {
 				let [row, hoistedData] = transformChuncks(c, conf);
 				if (hoistedData) {
-					row.bitfs = `${txObj.hash}.in.${inputIndex}.${chunkIndex}`;
-					bitfs.push({
+					row.uri = `${txObj.hash}.in.${inputIndex}.${chunkIndex}`;
+					uri.push({
 						...hoistedData,
-						bitfs: row.bitfs,
+						uri: row.uri,
 						txid: txObj.hash,
 						type: 'in',
 						iScript: inputIndex,
@@ -105,10 +105,10 @@ export default function (transaction, config: TxConf = defaultTxConfig) {
 			let payload = output.script.chunks.map(function (c, chunkIndex) {
 				let [row, hoistedData] = transformChuncks(c, conf);
 				if (hoistedData) {
-					row.bitfs = `${txObj.hash}.out.${outputIndex}.${chunkIndex}`;
-					bitfs.push({
+					row.uri = `${txObj.hash}.out.${outputIndex}.${chunkIndex}`;
+					uri.push({
 						...hoistedData,
-						bitfs: row.bitfs,
+						uri: row.uri,
 						txid: txObj.hash,
 						type: 'out',
 						iScript: outputIndex,
@@ -147,7 +147,7 @@ export default function (transaction, config: TxConf = defaultTxConfig) {
 			tx.out.push(result);
 		});
 
-		resolve(filterOutput({tx, data: bitfs}, conf));
+		resolve(filterOutput({tx, data: uri}, conf));
 	});
 }
 

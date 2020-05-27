@@ -145,7 +145,7 @@ bs58@=4.0.1:
   dependencies:
     base-x "^3.0.2"
 
-bsv@1.5.3:
+bsv@^1.2.0:
   version "1.5.3"
   resolved "https://registry.yarnpkg.com/bsv/-/bsv-1.5.3.tgz#c6602a24c07741d3d01fc461e7399e1d5ce1708b"
   integrity sha512-aqswtGiAX3hRivUIsOCquNAFx5VJvMbDzaiWNoJgnjYRh+8jSNC6eOhVpgJBo43f7SUa2QiEQtANUP3RGiWFUQ==
@@ -190,11 +190,6 @@ chardet@^0.7.0:
   version "0.7.0"
   resolved "https://registry.yarnpkg.com/chardet/-/chardet-0.7.0.tgz#90094849f0937f2eedc2425d0d28a9e5f0cbad9e"
   integrity sha512-mT8iDcrh03qDGRRmoA2hmBJnxpllMR+0/0qlzjqZES6NdiWDcZkCNAk4rPFZ9Q85r27unkiNNg8ZOiwZXBHwcA==
-
-chiqq@0.1.2:
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/chiqq/-/chiqq-0.1.2.tgz#7147e9e4580833d32f4bdbb7666a2bc3f7b5124e"
-  integrity sha512-DRaiyyWPiDsnFlciSkR4BasrddJqT4N1Q4o1tp9y1aEb73XVvFTneUuWw5Fe/cV0XaZWIvKsOq7mjxhZtPKjdw==
 
 cli-cursor@^3.1.0:
   version "3.1.0"

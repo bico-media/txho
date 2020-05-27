@@ -106,7 +106,7 @@ High level format of the output:
 {
   "tx": {
     "txid": [Transaction hash],
-    "input": [    // an array with an object per input
+    "in": [    // an array with an object per input
       {
         "origin": {
           "txid": [Transaction h where this input originated]
@@ -124,13 +124,13 @@ High level format of the output:
           {        // if data is larger than includeDataMax (defaults to 512)
             "size": [number of bytes]
             "sha256": [hash of content],
-            "bitfs": [a reference in [bitfs](bitfs.network) notation to identify data in the property data]
+            "uri": [a reference in [bitfs](bitfs.network) notation to identify the location in the data property]
             }
           }
         ]
       }
     ],
-    "output": [
+    "out": [
       {
 		"value": [Amount of sathoshi in the output]
 		"address": [receiver address]
@@ -157,7 +157,7 @@ High level format of the output:
       "size": [bytesize]
       "sha256": [hash],
       "b64": [data base 64 encoded],
-      "bitfs": [The ref],
+      "uri": [The reference],
       "txid": [transaction hash of this transaction],
       "type": [input or output],
       "iScript": [index amongst input or output],
@@ -317,7 +317,7 @@ returns
 
 ---
 
-An example with a call from node with default parameters
+An example using node with default parameters
 
 ```js
 const txho = require('txho');
@@ -529,7 +529,7 @@ The output will be:
 			"size": 39011,
 			"sha256": "24066cd470667f0358ea48430c77e4e849cf637c8e491af2df14a260137d43d5",
 			"b64": "H4sIAAAAAAACA+y9aWPb.... lots of data ....HTeOYdsnu5//4/hRkEpDO0AgA=",
-			"bitfs": "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169.out.0.3",
+			"uri": "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169.out.0.3",
 			"txid": "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169",
 			"type": "out",
 			"iScript": 0,
