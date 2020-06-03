@@ -1,5 +1,10 @@
-#!/usr/bin/env node
-export * as fromTxid from './fromHash';
 export * as fromHash from './fromHash';
 export * as fromTx from './fromTx';
-export * as fromRawtx from './fromTx';
+
+import * as txid from './fromHash';
+import * as rawtx from './fromTx';
+export default {
+	from: {
+		txid, rawtx
+	}
+}
