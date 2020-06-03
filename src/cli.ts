@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 require('dotenv').config();
 const JSON5 = require('json5');
 const readline = require('readline');
@@ -7,7 +9,7 @@ import fromTx from './fromTx';
 import filterObj from './filterObj';
 import {TxConf} from './types';
 
-export default function () {
+(function () {
 	const [command, data] = argv._;
 
 	if (!command) {
@@ -48,7 +50,7 @@ export default function () {
 		default:
 			kill('Unknown command');
 	}
-}
+})();
 
 function pipeData(command, config) {
 	const conf = {compress: true, skip: 0, ...config};

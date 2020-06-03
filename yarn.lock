@@ -145,10 +145,10 @@ bs58@=4.0.1:
   dependencies:
     base-x "^3.0.2"
 
-bsv@^1.2.0:
-  version "1.5.3"
-  resolved "https://registry.yarnpkg.com/bsv/-/bsv-1.5.3.tgz#c6602a24c07741d3d01fc461e7399e1d5ce1708b"
-  integrity sha512-aqswtGiAX3hRivUIsOCquNAFx5VJvMbDzaiWNoJgnjYRh+8jSNC6eOhVpgJBo43f7SUa2QiEQtANUP3RGiWFUQ==
+bsv@1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/bsv/-/bsv-1.2.0.tgz#555598c37411e5af94ebc6ad4f16adfcb9ebb1ef"
+  integrity sha512-Hccrppea561dus7v/5OZsSWClsPYLFd+kQjdRRkR5Ky+fuwlJYtMdJWGR7nuLUKqWyZwkBI5lLocXERvZ/zSkg==
   dependencies:
     aes-js "^3.1.2"
     bn.js "=4.11.8"
@@ -371,7 +371,7 @@ glob-parent@^5.1.0:
   dependencies:
     is-glob "^4.0.1"
 
-global@4.4.0:
+global@^4.4.0:
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/global/-/global-4.4.0.tgz#3e7b105179006a323ed71aafca3e9c57a5cc6406"
   integrity sha512-wv/LAoHdRE3BeTGz53FAamhGlPLhlssK45usmGFThIi4XqnBmjKQ16u+RNbP7WvigRZDxUsM0J3gcQ5yicaL0w==

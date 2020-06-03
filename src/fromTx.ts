@@ -41,7 +41,7 @@ export default function (transaction, config: TxConf = defaultTxConfig) {
 	};
 
 	if (conf.cellAll) {
-		conf.cellAuto = conf.cellB64 = conf.cellStr = conf.cellHex  = conf.cellHash = true;
+		conf.cellAuto = conf.cellB64 = conf.cellStr = conf.cellHex = conf.cellHash = true;
 	}
 
 	if (conf.txo) {

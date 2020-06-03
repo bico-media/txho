@@ -1,8 +1,5 @@
 #!/usr/bin/env node
-export * from './fromHash';
-export * from './fromTx';
-import cli from './cli';
-
-if (require.main === module) {
-	cli();
-}
+export * as fromTxid from './fromHash';
+export * as fromHash from './fromHash';
+export * as fromTx from './fromTx';
+export * as fromRawtx from './fromTx';
