@@ -15,6 +15,7 @@
 	"scripts": {
 		"go": "ts-node src/index.ts",
 		"test": "echo Tests are not automated yet",
+		"fmt": "prettier --write src/",
 		"build": "tsc src/index.ts src/cli.ts  --outDir dist/",
 		"prepublishOnly": "yarn build && yarn bump",
 		"bump": "yarn is-git-clean && bump --tag 'v%s'",
@@ -29,7 +30,7 @@
 		"txo": "0.0.21"
 	},
 	"devDependencies": {
-		"@types/node": "14.0.5",
+		"@types/node": "^14.0.10",
 		"ts-node": "8.10.1",
 		"typescript": "3.9.3",
 		"version-bump-prompt": "6.0.3"
@@ -47,6 +48,7 @@
 		"useTabs": true,
 		"printWidth": 100,
 		"singleQuote": true,
-		"bracketSpacing": false
+		"bracketSpacing": false,
+		"semi": false
 	}
 }

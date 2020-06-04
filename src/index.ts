@@ -1,10 +1,11 @@
-export * as fromHash from './fromHash';
-export * as fromTx from './fromTx';
-
-import * as txid from './fromHash';
-import * as rawtx from './fromTx';
+import * as txid from './fromTxid'
+import * as rawtx from './fromRawtx'
 export default {
 	from: {
-		txid, rawtx
-	}
+		txid,
+		rawtx,
+	},
+}
+if (require && require.main === module) {
+	console.error('Please use "cli" instead of "index"') 
 }

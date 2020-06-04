@@ -1,53 +1,53 @@
 const recursiveCloneAndFilter = (object, predicate, objectPath = [], knownObjects = []) => {
 	if (object && !knownObjects.includes(object) && typeof object === 'object') {
 		if (object.constructor && object.constructor.name === 'Object') {
-			const currentknownObjects = knownObjects.concat([object]);
-			const copy = {};
+			const currentknownObjects = knownObjects.concat([object])
+			const copy = {}
 			Object.keys(object).forEach((key) => {
-				const value = object[key];
-				const currentPath = objectPath.concat(key);
+				const value = object[key]
+				const currentPath = objectPath.concat(key) 
 				if (predicate(currentPath, value)) {
-					copy[key] = recursiveCloneAndFilter(value, predicate, currentPath, currentknownObjects);
+					copy[key] = recursiveCloneAndFilter(value, predicate, currentPath, currentknownObjects)
 				}
-			});
-			return copy;
+			})
+			return copy
 		} else if (Array.isArray(object)) {
-			const copy = [];
+			const copy = []
 			object.forEach((value, index) => {
-				copy[index] = recursiveCloneAndFilter(value, predicate, objectPath, knownObjects);
-			});
-			return copy;
+				copy[index] = recursiveCloneAndFilter(value, predicate, objectPath, knownObjects)
+			})
+			return copy
 		}
 	}
-	return object;
-};
+	return object
+}
 
 const arrayStartsWithArray = (a, b) => {
 	return (
 		b.filter((element, index) => {
-			return a[index] !== b[index];
+			return a[index] !== b[index]
 		}).length === 0
-	);
-};
+	)
+}
 
 export default (object, projection) => {
-	const defaultPredicate = !Object.values(projection).includes(1);
+	const defaultPredicate = !Object.values(projection).includes(1)
 
 	return recursiveCloneAndFilter(object, (cpath) => {
 		const filteredPaths = Object.keys(projection).filter((ppathString) => {
-			const cpathString = cpath.join('.');
-			const ppath = ppathString.split('.');
+			const cpathString = cpath.join('.')
+			const ppath = ppathString.split('.')
 			if (arrayStartsWithArray(ppath, cpath) || arrayStartsWithArray(cpath, ppath)) {
 				if (defaultPredicate) {
-					return ppathString === cpathString && !projection[ppathString] === defaultPredicate;
+					return ppathString === cpathString && !projection[ppathString] === defaultPredicate
 				}
-				return ppathString === cpathString || !projection[ppathString] === defaultPredicate;
+				return ppathString === cpathString || !projection[ppathString] === defaultPredicate
 			}
-			return false;
-		});
+			return false
+		})
 		if (filteredPaths.length) {
-			return !defaultPredicate;
+			return !defaultPredicate
 		}
-		return defaultPredicate;
-	});
-};
+		return defaultPredicate
+	})
+}

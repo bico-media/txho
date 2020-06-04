@@ -9,7 +9,7 @@ TXHO translates raw bitcoin transaction into JSON format while hoisting larger d
 - Store context information and content information separately
 - Filter in realtime using JSON filter libraries (such as JQ)
 
-TXHO can be used as a module for node, from the CLI to make sense of a raw bitcoin transaction or as a processing unit when piping data.
+TXHO can be used in the browser, as a module for node, from the CLI to make sense of a raw bitcoin transaction or as a processing unit when piping data.
 
 # Installation
 
@@ -50,8 +50,8 @@ The sequence of the output is **not** guaranteed to be the same as the input. If
 
 There are two methods:
 
-1. **fromTx:** Generates JSON from raw transaction data (Local operation and doesn't require a bitcoin node)
-2. **fromHash:** Generates JSON from transaction hash. (requires a bitcoin node for JSON-RPC)
+1. **txho.from.rawtx()** generates JSON from raw transaction data (Local operation and doesn't require a bitcoin node)
+2. **txho.from.txid()** generates JSON from a transaction hash. (requires a bitcoin node for JSON-RPC)
 
 ### fromTx
 
@@ -60,9 +60,9 @@ Generate JSON from raw transaction string.
 Example
 
 ```js
-const txho = require('txho');
+import txho from 'txho'
 (async function () {
-	let result = await txho.fromTx(
+	let result = await txho.from.rawtx(
 		'0100000001d5001345e77e66fa74f0012a81017ea1223c7a8adbcc9e37f2860f95ba97966d000000006b483045022100c1a0c5ffc5b78e39acb5be1438e28a10e5aac8337f5da7e4c25ba4c5f3eb01b5022050e9997bae423585da52d7cdc8951379f5bff07adb6756ffe70e7c7181f8a5bd4121032b345f89620af75f59aa91d47cc359e4dd907816ce0652604922726025712f52ffffffff024a976200000000001976a914c6187747f80b85170eef7013218e7b0fa441479988ac44033f00000000001976a9147e4616b7453185a5f071417bb4ac08e226dbef9888ac00000000'
 	);
 	console.log(result);
@@ -71,7 +71,7 @@ const txho = require('txho');
 
 ### fromHash
 
-The `fromHash` method needs to contact a bitcoin node to use JSON-RPC, therefore you need to have access to a JSON-RPC endpoint.
+The `txho.from.txid` method needs to contact a bitcoin node to use JSON-RPC, therefore you need to have access to a JSON-RPC endpoint.
 
 The first step is to make a `.env` file
 
@@ -85,9 +85,9 @@ BITCOIN_PORT=[Bitcoin Node Port]
 Then, we can get the JSON representation of the transactoin like this:
 
 ```js
-const txho = require('txho');
+import txho from 'txho'
 (async function () {
-	let result = await txho.fromHash(
+	let result = await txho..from.txid(
 		'45c6113bb1ecddc976131022bc80f46684d8956ab1a7bb5fc5625b5f7a930438'
 	);
 	console.log(result);
@@ -320,9 +320,9 @@ returns
 An example using node with default parameters
 
 ```js
-const txho = require('txho');
+import txho from 'txho'
 (async function () {
-	let result = await txho.fromHash(
+	let result = await txho.from.txid(
 		'c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169'
 	);
 	console.log(result);

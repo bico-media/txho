@@ -137,17 +137,17 @@ export const script = {
 	OP_PUBKEYHASH: 253,
 	OP_PUBKEY: 254,
 	OP_INVALIDOPCODE: 255,
-};
+}
 
-const opVal = Array(255);
-Object.keys(script).forEach((key) => (opVal[script[key]] = `${key}`));
-export {opVal};
+const opVal = Array(255)
+Object.keys(script).forEach((key) => (opVal[script[key]] = `${key}`)) 
+export {opVal}
 
 export function opCode(input: string): number {
-	return script[input] || -1;
+	return script[input] || -1
 }
 
 export function opName(input: number): string {
-	if (0 === input) return 'OP_FALSE';
-	return opVal[input] || 'UNKNOWN_OP_' + input;
+	if (0 === input) return 'OP_FALSE'
+	return opVal[input] || 'UNKNOWN_OP_' + input
 }
