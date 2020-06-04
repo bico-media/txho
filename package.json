@@ -16,7 +16,7 @@
 		"go": "ts-node src/index.ts",
 		"test": "echo Tests are not automated yet",
 		"fmt": "prettier --write src/",
-		"build": "tsc src/index.ts src/cli.ts  --outDir dist/",
+		"build": "tsc src/index.ts src/cli.ts --outDir dist/ --allowJs",
 		"prepublishOnly": "yarn build && yarn bump",
 		"bump": "yarn is-git-clean && bump --tag 'v%s'",
 		"is-git-clean": "(git diff --quiet --exit-code --cached && git diff --quiet --exit-code) || (echo Please commit or stash changes && exit 1)"

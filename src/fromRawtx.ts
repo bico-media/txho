@@ -1,5 +1,5 @@
 const bsv = require('bsv')
-import txoFromTx from './txo'
+import {fromTx as txoFromTx} from './txo'
 import filterObj from './filterObj'
 import {opName} from './opCodes'
 import {TxConf, TxCell, TxRef} from './types'
