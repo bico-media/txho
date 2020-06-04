@@ -1,5 +1,5 @@
 const bsv = require('bsv')
-import txo from 'txo'
+import txoFromTx from './txo'
 import filterObj from './filterObj'
 import {opName} from './opCodes'
 import {TxConf, TxCell, TxRef} from './types'
@@ -44,7 +44,7 @@ export default function (transaction, config: TxConf = defaultTxConfig) {
 	}
 
 	if (conf.txo) {
-		return filterOutput(txo.fromTx(conf.txo), conf)
+		return filterOutput(txoFromTx(conf.txo), conf)
 	}
 
 	return new Promise(function (resolve, reject) {
