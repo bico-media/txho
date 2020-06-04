@@ -1,6 +1,6 @@
 {
 	"name": "txho",
-	"version": "2.0.2",
+	"version": "3.0.0",
 	"description": "Get a Bitcoin transaction as JSON for CLI and node",
 	"main": "dist/index.js",
 	"bin": {
