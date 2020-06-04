@@ -1,7 +1,9 @@
-// Cloned from https://github.com/interplanaria/txo/blob/master/index.js to remove the hashbang. Licence: https://github.com/interplanaria/txo/blob/master/LICENSE
+// Cloned from https://github.com/interplanaria/txo/blob/master/index.js to remove hashbang and unneeded promise. Licence: https://github.com/interplanaria/txo/blob/master/LICENSE
+// @ts-nocheck
+
+import * as bsv from 'bsv'
 
 export const fromTx = function (transaction, options) {
-	return new Promise(function (resolve, reject) {
 		let gene = new bsv.Transaction(transaction)
 		let t = gene.toObject()
 		let result = []
@@ -101,6 +103,5 @@ export const fromTx = function (transaction, options) {
 		if (options && options.confirmations) {
 			r.confirmations = options.confirmations
 		}
-		resolve(r)
-	})
+		return r
 }

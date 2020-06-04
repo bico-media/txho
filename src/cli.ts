@@ -102,11 +102,7 @@ function pipeData(command, config) {
 }
 
 function echo(res:any, conf: TxConf, prependErrMsg = '') {
-	res.then((result:string) => console.log(JSON.stringify(result, null, conf.compress ? undefined : 2)))
-
-	if (!conf.debug) {
-		res.catch((e) => kill(prependErrMsg + e.message))
-	}
+	console.log(JSON.stringify(res, null, conf.compress ? undefined : 2))
 }
 
 function kill(str = '') {

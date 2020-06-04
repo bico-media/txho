@@ -1,11 +1,13 @@
-const bsv = require('bsv')
-import {fromTx as txoFromTx} from './txo'
+
+import * as bsv from 'bsv'
+import {fromTx as txoFromTx} from './bundle/txo'
 import filterObj from './filterObj'
 import {opName} from './opCodes'
 import {TxConf, TxCell, TxRef} from './types'
-import {toB64} from './browserAndNodeB64'
+import * as base64 from 'base-64'
+import Hash from 'jshashes'
 
-const atobPipe = toB64('|')
+const atobPipe = base64.encode('|')
 
 const re = {
 	probablyBinary: /[\x00-\x08\x0E-\x1f]/,
@@ -44,22 +46,21 @@ export default function (transaction, config: TxConf = defaultTxConfig) {
 	}
 
 	if (conf.txo) {
-		return filterOutput(txoFromTx(conf.txo), conf)
+		return filterOutput(txoFromTx(transaction, conf.txo), conf)
 	}
 
-	return new Promise(function (resolve, reject) {
 		let txData = new bsv.Transaction(transaction)
 
-		if (!txData) return reject('tx not valid')
+		if (!txData) return 'tx not valid'
 
 		let txObj = txData.toObject()
-		let tx = {
+		let tx:any = {
 			txid: txObj.hash,
 			lockTime: txObj.nLockTime,
 			in: [],
 			out: [],
 		}
-		let uri = []
+		let uri:any = []
 
 		txData.inputs?.forEach(function (input, inputIndex) {
 			if (!input.script) {
@@ -128,7 +129,7 @@ export default function (transaction, config: TxConf = defaultTxConfig) {
 
 			result.payload = payload.map((e) => e.display || e)
 
-			let split = [[]]
+			let split:any = [[]]
 
 			for (let i = 0; i < payload.length; i++) {
 				if (conf.splitDelimiter(payload[i], payload, i)) {
@@ -146,8 +147,7 @@ export default function (transaction, config: TxConf = defaultTxConfig) {
 			tx.out.push(result)
 		})
 
-		resolve(filterOutput({tx, data: uri}, conf))
-	})
+		return filterOutput({tx, data: uri}, conf)
 }
 
 function transformChuncks(c, conf: TxConf) {
@@ -157,7 +157,7 @@ function transformChuncks(c, conf: TxConf) {
 		if (0 < conf.maxDataSize && conf.maxDataSize < c.buf.byteLength) {
 			cell = {
 				size: c.buf.byteLength,
-				sha256: require('crypto').createHash('sha256').update(c.buf).digest('hex'),
+				sha256: new Hash.SHA256.hex(c.buf),
 			}
 			return [
 				{...cell, display: cell},
@@ -185,7 +185,7 @@ function transformChuncks(c, conf: TxConf) {
 		if (conf.cellBuf) cell.display.buf = cell.buf
 
 		if (conf.cellHash)
-			cell.sha256 = require('crypto').createHash('sha256').update(c.buf).digest('hex')
+			cell.sha256 = new Hash.SHA256.hex(c.buf)
 
 		if (conf.cellAuto) {
 			if (!re.probablyBinary.test(cell.str)) {
@@ -221,7 +221,9 @@ function filterOutput(obj: any, conf: TxConf) {
 			.trim()
 			.split(',')
 			.forEach((e: any) => (filterConfig[e.trim()] = 1))
-	} else if (conf.hide?.trim().length && !filterConfig) {
+	} 
+	
+	if (conf.hide?.trim().length && !filterConfig) {
 		filterConfig = {}
 		conf.hide
 			.trim()
