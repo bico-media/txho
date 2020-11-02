@@ -5,7 +5,7 @@ import filterObj from './filterObj'
 import {opName} from './opCodes'
 import {TxConf, TxCell, TxRef} from './types'
 import * as base64 from 'base-64'
-import Hash from 'jshashes'
+import { sha256 } from 'js-sha256';
 
 const atobPipe = base64.encode('|')
 
@@ -157,7 +157,7 @@ function transformChuncks(c, conf: TxConf) {
 		if (0 < conf.maxDataSize && conf.maxDataSize < c.buf.byteLength) {
 			cell = {
 				size: c.buf.byteLength,
-				sha256: new Hash.SHA256.hex(c.buf),
+				sha256: sha256.hex(c.buf),
 			}
 			return [
 				{...cell, display: cell},
@@ -185,7 +185,7 @@ function transformChuncks(c, conf: TxConf) {
 		if (conf.cellBuf) cell.display.buf = cell.buf
 
 		if (conf.cellHash)
-			cell.sha256 = new Hash.SHA256.hex(c.buf)
+			cell.sha256 = sha256.hex(c.buf)
 
 		if (conf.cellAuto) {
 			if (!re.probablyBinary.test(cell.str)) {

@@ -1,5 +1,8 @@
 {
 	"compilerOptions": {
-		"noImplicitAny": false
+		"noImplicitAny": false,
+		"target": "es2019",
+		"strict": false,
+		"moduleResolution": "node",
 	}
 }

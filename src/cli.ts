@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-require('dotenv').config()
+import * as dotenv from 'dotenv'
+dotenv.config()
 const JSON5 = require('json5')
 const readline = require('readline')
 const argv = require('minimist')(process.argv.slice(2))
