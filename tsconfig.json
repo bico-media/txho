@@ -4,5 +4,6 @@
 		"target": "es2019",
 		"strict": false,
 		"moduleResolution": "node",
+		"resolveJsonModule": true
 	}
 }

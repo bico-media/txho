@@ -1,6 +1,6 @@
 {
 	"name": "txho",
-	"version": "3.0.5",
+	"version": "3.0.7",
 	"description": "Get a Bitcoin transaction as JSON for CLI and node",
 	"main": "dist/index.js",
 	"bin": {
@@ -14,15 +14,18 @@
 	},
 	"scripts": {
 		"go": "ts-node src/index.ts",
-		"test": "echo Tests are not automated yet",
-		"fmt": "prettier --write src/",
+		"test": "yarn build && npm uninstall -g txho && npm install -g ./ && txho -v",
 		"build": "tsc src/index.ts src/cli.ts --outDir dist/ --allowJs",
-		"prepublishOnly": "yarn build && yarn bump",
-		"bump": "yarn is-git-clean && bump --tag 'v%s'",
+		"version": "rexreplace _VERSION_ \"r('package.json').version\" -j dist/*.*",
+		"prepublishOnly": "yarn is-git-clean && git rebase origin && yarn test && yarn bump",
+		"postpublish": "git push --tag && git push && (open https://github.com/bico-media/txho/releases || 1)",
+		"test-format": "yarn prettier --list-different || (echo 'Please correct file formatting using `yarn format` and try again.' && exit 1)",
+		"fmt": "yarn prettier --write",
+		"prettier": "prettier '{.,{src,test}/**}/*.{js,ts,json}'",
+		"bump": "yarn is-git-clean && bump --tag 'v%s' --all",
 		"is-git-clean": "(git diff --quiet --exit-code --cached && git diff --quiet --exit-code) || (echo Please commit or stash changes && exit 1)"
 	},
 	"dependencies": {
-		"@types/dotenv": "^8.2.0",
 		"base-64": "1.0.0",
 		"bitcoind-rpc": "0.8.1",
 		"bsv": "1.5.4",
@@ -50,6 +53,7 @@
 		"printWidth": 100,
 		"singleQuote": true,
 		"bracketSpacing": false,
+		"trailingComma": "es5",
 		"semi": false
 	}
 }
