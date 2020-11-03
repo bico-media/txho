@@ -53,8 +53,22 @@ export default function(transaction, config: TxConf = defaultTxConfig) {
 		return filterOutput(txoFromTx(transaction, conf.txo), conf)
 	}
 
-	let txData = new bsv.Transaction(transaction)
+	let txData
+	try {
+		txData = new bsv.Transaction(transaction)
+	} catch (e) {
+		console.error(e.message)
 
+		if (64 === transaction.length)
+			console.error(
+				'\nThe input looks like a transaction ID and not the raw transaction data. Try using `txid` instead of `rawtx`.\n'
+			)
+
+		if(e.message.includes('deserialize a transaction')){
+			console.error('\nIs your input dirty or needs a trim? Try the `cleanData` flag.\n')
+		}
+		process.exit(1)
+	}
 	if (!txData) return 'tx not valid'
 
 	let txObj = txData.toObject()
