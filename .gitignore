@@ -7,3 +7,5 @@ out.json
 output.json
 input.txt
 .*/
+*.log
+

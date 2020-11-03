@@ -7,5 +7,5 @@ export default {
 	},
 }
 if (require && require.main === module) {
-	console.error('Please use "cli" instead of "index"') 
+	console.error('Please use "cli" instead of "index"')
 }

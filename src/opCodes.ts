@@ -140,7 +140,7 @@ export const script = {
 }
 
 const opVal = Array(255)
-Object.keys(script).forEach((key) => (opVal[script[key]] = `${key}`)) 
+Object.keys(script).forEach(key => (opVal[script[key]] = `${key}`))
 export {opVal}
 
 export function opCode(input: string): number {

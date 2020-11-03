@@ -4,7 +4,7 @@ interface Configuration {
 	paused?: false
 	retryMax?: number
 	retryCooling?: number
-	retryFactor?: number 
+	retryFactor?: number
 }
 
 interface ConfigTask {
@@ -14,7 +14,7 @@ interface ConfigTask {
 }
 
 const delay = async (timeout: number) => {
-	return new Promise((resolve) => {
+	return new Promise(resolve => {
 		setTimeout(() => resolve(), timeout)
 	})
 }
