@@ -1,11 +1,11 @@
-
 import * as bsv from 'bsv'
 import {fromTx as txoFromTx} from './bundle/txo'
 import filterObj from './filterObj'
 import {opName} from './opCodes'
 import {TxConf, TxCell, TxRef} from './types'
 import * as base64 from 'base-64'
-import { sha256 } from 'js-sha256';
+import {sha256} from 'js-sha256'
+import {findHexs} from './misc'
 
 const atobPipe = base64.encode('|')
 
@@ -39,6 +39,12 @@ export default function (transaction, config: TxConf = defaultTxConfig) {
 	const conf = {
 		...defaultTxConfig,
 		...config,
+	}
+
+	if (conf.cleanData) {
+		transaction = findHexs(transaction)
+			.sort((a, b) => b.length - a.length)
+			.shift()
 	}
 
 	if (conf.cellAll) {
@@ -215,23 +221,34 @@ function transformChuncks(c, conf: TxConf) {
 }
 
 function filterOutput(obj: any, conf: TxConf) {
-	if (conf.only?.trim().length && !filterConfig) {
+	let filterConfig: any = null
+
+	if (conf.only?.trim().length) {
 		filterConfig = {}
 		conf.only
 			.trim()
 			.split(',')
 			.forEach((e: any) => (filterConfig[e.trim()] = 1))
+		obj = filterObj(obj, filterConfig)
 	} 
 	
-	if (conf.hide?.trim().length && !filterConfig) {
+	if (conf.hide?.trim().length) {
 		filterConfig = {}
 		conf.hide
 			.trim()
 			.split(',')
 			.forEach((e: any) => (filterConfig[e.trim()] = 0))
+		obj = filterObj(obj, filterConfig)
 	}
 
-	if (filterConfig) return filterObj(obj, filterConfig)
-
 	return obj
+}
+
+function datamap(data) {
+	let datamap: any = {}
+	for (let nn in data) {
+		const n = +nn
+		datamap[`${data[n].txid}.${data[n].type}.${data[n].iScript}.${data[n].iChunk}`] = n
+	}
+	return datamap
 }

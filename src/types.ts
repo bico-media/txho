@@ -42,8 +42,9 @@ export interface TxConf {
 	protocol?: string
 	user?: string
 	pass?: string
-	host?: string 
+	host?: string
 	port?: string
 	help?: boolean
+	cleanData?: boolean
 	jsonRpc?: any
 }
