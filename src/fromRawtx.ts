@@ -15,8 +15,6 @@ const re = {
 	miliTimestamp: /^[1-2][0-9]{12}$/,
 }
 
-let filterConfig: any = null
-
 const defaultTxConfig = {
 	network: bsv.Networks.livenet,
 	maxDataSize: 512,
@@ -35,7 +33,7 @@ const defaultTxConfig = {
 		atobPipe === cell.b64 || 'OP_RETURN' === cell.opName || 'OP_FALSE' === cell.opName,
 }
 
-export default function (transaction, config: TxConf = defaultTxConfig) {
+export default function(transaction, config: TxConf = defaultTxConfig) {
 	const conf = {
 		...defaultTxConfig,
 		...config,
@@ -55,108 +53,108 @@ export default function (transaction, config: TxConf = defaultTxConfig) {
 		return filterOutput(txoFromTx(transaction, conf.txo), conf)
 	}
 
-		let txData = new bsv.Transaction(transaction)
+	let txData = new bsv.Transaction(transaction)
 
-		if (!txData) return 'tx not valid'
+	if (!txData) return 'tx not valid'
 
-		let txObj = txData.toObject()
-		let tx:any = {
-			txid: txObj.hash,
-			lockTime: txObj.nLockTime,
-			in: [],
-			out: [],
+	let txObj = txData.toObject()
+	let tx: any = {
+		txid: txObj.hash,
+		lockTime: txObj.nLockTime,
+		in: [],
+		out: [],
+	}
+	let data: any = []
+
+	txData.inputs?.forEach(function(input, inputIndex) {
+		if (!input.script) {
+			return tx.in.push(input)
 		}
-		let uri:any = []
 
-		txData.inputs?.forEach(function (input, inputIndex) {
-			if (!input.script) {
-				return tx.in.push(input)
+		let payload = input.script.chunks.map(function(c, chunkIndex) {
+			let [row, hoistedData] = transformChuncks(c, conf)
+			if (hoistedData) {
+				row.uri = `${txObj.hash}.in.${inputIndex}.${chunkIndex}`
+				row.display.uri = row.uri
+				data.push({
+					...hoistedData,
+					txid: txObj.hash,
+					type: 'in',
+					iScript: inputIndex,
+					iChunk: chunkIndex,
+				})
 			}
 
-			let payload = input.script.chunks.map(function (c, chunkIndex) {
-				let [row, hoistedData] = transformChuncks(c, conf)
-				if (hoistedData) {
-					row.uri = `${txObj.hash}.in.${inputIndex}.${chunkIndex}`
-					uri.push({
-						...hoistedData,
-						uri: row.uri,
-						txid: txObj.hash,
-						type: 'in',
-						iScript: inputIndex,
-						iChunk: chunkIndex,
-					})
-				}
-
-				return row
-			})
-
-			let origin: any = {
-				txid: input.prevTxId.toString('hex'),
-				iOut: input.outputIndex,
-			}
-
-			let address = input.script.toAddress(conf.network).toString()
-			if (address && address.length > 13) {
-				origin.address = address
-			}
-
-			tx.in.push({seq: input.sequenceNumber, origin, payload: payload.map((e) => e.display || e)})
+			return row
 		})
 
-		txData.outputs?.forEach(function (output, outputIndex) {
-			if (!output.script) {
-				return tx.out.push(output)
+		let origin: any = {
+			txid: input.prevTxId.toString('hex'),
+			iOut: input.outputIndex,
+		}
+
+		let address = input.script.toAddress(conf.network).toString()
+		if (address && address.length > 13) {
+			origin.address = address
+		}
+
+		tx.in.push({seq: input.sequenceNumber, origin, payload: payload.map(e => e.display || e)})
+	})
+
+	txData.outputs?.forEach(function(output, outputIndex) {
+		if (!output.script) {
+			return tx.out.push(output)
+		}
+
+		let payload = output.script.chunks.map(function(c, chunkIndex) {
+			let [row, hoistedData] = transformChuncks(c, conf)
+			if (hoistedData) {
+				row.uri = `${txObj.hash}.out.${outputIndex}.${chunkIndex}`
+				row.display.uri = row.uri
+				data.push({
+					...hoistedData,
+					txid: txObj.hash,
+					type: 'out',
+					iScript: outputIndex,
+					iChunk: chunkIndex,
+				})
 			}
 
-			let payload = output.script.chunks.map(function (c, chunkIndex) {
-				let [row, hoistedData] = transformChuncks(c, conf)
-				if (hoistedData) {
-					row.uri = `${txObj.hash}.out.${outputIndex}.${chunkIndex}`
-					uri.push({
-						...hoistedData,
-						uri: row.uri,
-						txid: txObj.hash,
-						type: 'out',
-						iScript: outputIndex,
-						iChunk: chunkIndex,
-					})
-				}
+			return row
+		})
 
-				return row
-			})
+		let result: any = {value: output.satoshis}
 
-			let result: any = {value: output.satoshis}
+		let address = output.script.toAddress(conf.network).toString()
 
-			let address = output.script.toAddress(conf.network).toString()
+		if (address && address.length > 13) {
+			result.address = address
+		}
 
-			if (address && address.length > 13) {
-				result.address = address
-			}
+		result.payload = payload.map(e => e.display || e)
 
-			result.payload = payload.map((e) => e.display || e)
+		let split: any = [[]]
 
-			let split:any = [[]]
-
-			for (let i = 0; i < payload.length; i++) {
-				if (conf.splitDelimiter(payload[i], payload, i)) {
-					if (0 === split[split.length - 1].length) {
-						continue
-					}
-					split.push([])
+		for (let i = 0; i < payload.length; i++) {
+			if (conf.splitDelimiter(payload[i], payload, i)) {
+				if (0 === split[split.length - 1].length) {
 					continue
 				}
-				split[split.length - 1].push(payload[i].display || payload[i])
+				split.push([])
+				continue
 			}
+			split[split.length - 1].push(payload[i].display || payload[i])
+		}
 
-			result.split = split
+		result.split = split
 
-			tx.out.push(result)
-		})
+		tx.out.push(result)
+	})
 
-		return filterOutput({tx, data: uri}, conf)
+	return filterOutput({tx, data, datamap: datamap(data)}, conf)
 }
 
-function transformChuncks(c, conf: TxConf) {
+function transformChuncks(c, conf: TxConf): [TxCell, TxRef?] {
 	let cell: TxCell = {}
 
 	if (c.buf) {
@@ -190,8 +188,7 @@ function transformChuncks(c, conf: TxConf) {
 
 		if (conf.cellBuf) cell.display.buf = cell.buf
 
-		if (conf.cellHash)
-			cell.sha256 = sha256.hex(c.buf)
+		if (conf.cellHash) cell.sha256 = sha256.hex(c.buf)
 
 		if (conf.cellAuto) {
 			if (!re.probablyBinary.test(cell.str)) {
@@ -230,8 +227,8 @@ function filterOutput(obj: any, conf: TxConf) {
 			.split(',')
 			.forEach((e: any) => (filterConfig[e.trim()] = 1))
 		obj = filterObj(obj, filterConfig)
-	} 
-	
+	}
+
 	if (conf.hide?.trim().length) {
 		filterConfig = {}
 		conf.hide

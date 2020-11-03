@@ -10,8 +10,6 @@ import fromRawtx from './fromRawtx'
 import filterObj from './filterObj'
 import {TxConf} from './types'
 const version = '_VERSION_'
-const axios = require('axios').default
-import {RE} from './misc'
 ;(function() {
 	if (argv.v || argv.version) {
 		console.log('v' + version)

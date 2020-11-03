@@ -46,14 +46,16 @@ The sequence of the output is **not** guaranteed to be the same as the input. If
 
 > cat lostOfTxids.txt | xargs txho txid >> output.nldjson
 
+
+
 ## Node
 
 There are two methods:
 
 1. **txho.from.rawtx()** generates JSON from raw transaction data (Local operation and doesn't require a bitcoin node)
-2. **txho.from.txid()** generates JSON from a transaction hash. (requires a bitcoin node for JSON-RPC)
+2. **txho.from.txid()** generates JSON from a transaction hash. (requires a bitcoin node for JSON-RPC) 
 
-### fromTx
+### from.rawTx
 
 Generate JSON from raw transaction string.
 
@@ -61,19 +63,17 @@ Example
 
 ```js
 import txho from 'txho'
-(async function () {
-	let result = await txho.from.rawtx(
-		'0100000001d5001345e77e66fa74f0012a81017ea1223c7a8adbcc9e37f2860f95ba97966d000000006b483045022100c1a0c5ffc5b78e39acb5be1438e28a10e5aac8337f5da7e4c25ba4c5f3eb01b5022050e9997bae423585da52d7cdc8951379f5bff07adb6756ffe70e7c7181f8a5bd4121032b345f89620af75f59aa91d47cc359e4dd907816ce0652604922726025712f52ffffffff024a976200000000001976a914c6187747f80b85170eef7013218e7b0fa441479988ac44033f00000000001976a9147e4616b7453185a5f071417bb4ac08e226dbef9888ac00000000'
-	);
-	console.log(result);
-})();
+let result = txho.from.rawtx(
+	'0100000001d5001345e77e66fa74f0012a81017ea1223c7a8adbcc9e37f2860f95ba97966d000000006b483045022100c1a0c5ffc5b78e39acb5be1438e28a10e5aac8337f5da7e4c25ba4c5f3eb01b5022050e9997bae423585da52d7cdc8951379f5bff07adb6756ffe70e7c7181f8a5bd4121032b345f89620af75f59aa91d47cc359e4dd907816ce0652604922726025712f52ffffffff024a976200000000001976a914c6187747f80b85170eef7013218e7b0fa441479988ac44033f00000000001976a9147e4616b7453185a5f071417bb4ac08e226dbef9888ac00000000'
+);
+console.log(result);
 ```
 
-### fromHash
+### from.txid
 
 The `txho.from.txid` method needs to contact a bitcoin node to use JSON-RPC, therefore you need to have access to a JSON-RPC endpoint.
 
-The first step is to make a `.env` file
+For the JSON-RPC endpoint the first step is to make a `.env` file
 
 ```bash
 BITCOIN_USERNAME=[Bitcoin Node Username]
@@ -86,21 +86,19 @@ Then, we can get the JSON representation of the transactoin like this:
 
 ```js
 import txho from 'txho'
-(async function () {
-	let result = await txho..from.txid(
-		'45c6113bb1ecddc976131022bc80f46684d8956ab1a7bb5fc5625b5f7a930438'
-	);
-	console.log(result);
-})();
+let result = txho.from.txid('45c6113bb1ecddc976131022bc80f46684d8956ab1a7bb5fc5625b5f7a930438');
+console.log(result);
 ```
+
+
 
 # The output
 
 TXHO outputs a JSON object that represents a transaction. Large data is hoisted from the main structure and placed next to it so that it's easy to manage large data in different ways while still keeping the references to ensure consistency.
 
-Please note that the structure of the default JSON output from TXHO is similar but not equal to the output from [TXO](https://github.com/interplanaria/txo) library or the related MOM notation. You can, however, get the original structure by providing the config variable `txo` with the configuration you normally provide TXO. The TXO functionality has been included to leverage the ability to pipe data.
+Please note that the structure of the default JSON output from TXHO is similar but not equal to the output from the [TXO](https://github.com/interplanaria/txo) library or the related MOM notations. You can, however, get the original TXO structure by providing the config variable `txo` with the configuration you normally provide TXO. The TXO functionality has been included to leverage the ability of TXHO to pipe data.
 
-High level format of the output:
+## High level format of the output:
 
 ```bash
 {
@@ -124,7 +122,7 @@ High level format of the output:
           {        // if data is larger than includeDataMax (defaults to 512)
             "size": [number of bytes]
             "sha256": [hash of content],
-            "uri": [a reference in [bitfs](bitfs.network) notation to identify the location in the data property]
+            "uri": [a reference in [bitfs](bitfs.network) notation to identify the location in the datamap property]
             }
           }
         ]
@@ -165,31 +163,17 @@ High level format of the output:
     },
   ]
   }
+  datamap:{
+	  "<Some uri>": [index where the data is located in the data property]
+  }
 }
 ```
 
 # Configuration of the output
 
-The output can be adjusted with the following configuration via cli:
+The output can be adjusted with the following configuration. For CLI you need to prepend `--` to the name. In node you provide a config object.
 
-```js
-   --network: string,         // main or test
-   --maxDataSize: number,     // What is the max size of data not hosted. Defaults to 512. If 0 no data is hoisted
-   --cellB64: flag;           // Aways add a base 64 representation of data to each cell. Default true
-   --cellStr: flag;           // Aways add a string representation of data to each cell. Default false
-   --cellHex: flag;           // Aways add a hex representation of data to each cell. Default false
-   --cellHash: flag;          // Aways add a buffer containing a data to each cell. Default false
-   --cellAuto: flag;          // Try to guess the most human readable format of str/hex/b64. Will add iso representatoin of utc if string looks like a timestamp
-   --cellAll: flag;           // Same as setting cellB63, cellStr, cellHex, cellHash and cellAuto to true
-   --cellBuf: flag;           // Aways add a buffer containing a data to each cell. Default false
-   --compress: flag;          // Compress the output to one line. Default false. If data is piped: default true.
-   --only: string             // Comma seperated list of dot-notated elements to only include in output (like --only=tx.txid,data.sha256)
-   --hide: string             // Comma seperated list of dot-notated elements to explude from output (like --hide=data.b64). Overruled by "only"
-   --skip: number             // For piped data only: how many lines to skip before starting to execute.
-   --txo: object              // The inside of a config object to initiate a TXO output.
-   --pool: object;            // The inside of a config object to manage the pool size of rpc requests: See more about chiqq on npm.
-                              // Is merged with default: --pool=concurrency:5,retryMax:3,retryCooling:1000,retryFactor:2
-```
+
 
 and following configuration via node:
 
@@ -201,8 +185,8 @@ and following configuration via node:
    cellHex: flag;           // Aways add a hex representation of data to each cell. Default false
    cellHash: flag;          // Aways add a buffer containing a data to each cell. Default false
    cellAuto: flag;          // Try to guess the most human readable format of str/hex/b64. Will add iso representatoin of utc if string looks like a timestamp
-   cellAll: flag;           // Same as setting cellB63, cellStr, cellHex, cellHash and cellAuto to true
-   cellBuf: flag;           // Aways add a buffer containing a data to each cell. Default false
+   cellAll: flag;           // Same as setting cellB64, cellStr, cellHex, cellHash and cellAuto to true
+   cellBuf: flag;           // Aways add a buffer containing raw data to each cell. Default false
    compress: boolean;       // Compress the output to one line. Default false. If data is piped: default true.
    only: string             // Comma seperated list of dot-notated elements to only include in output (like --only=tx.txid,data.sha256)
    hide: string             // Comma seperated list of dot-notated elements to explude from output (like --hide=data.b64). Overruled by "only"
@@ -210,8 +194,24 @@ and following configuration via node:
    pool: object;            // Config object to manage the pool size of rpc requests: See more about chiqq on npm.
 							// Is merged with {concurrency:5,retryMax:3,retryCooling:1000,retryFactor:2}
    splitDelimiter: fn       // function to indicate if elements is delimiter
-                            // defaults to: (e) => atobPipe === e.b64 || OP.RETURN === e.op || OP.FALSE === e.op,
+							// defaults to: `(e) => atobPipe === e.b64 || OP.RETURN === e.op || OP.FALSE === e.op`
+   
+							
 
+```
+
+Usage specific for the CLI:
+
+```js
+  
+   only: string             // Comma seperated list of dot-notated elements to only include in output (like `--only=tx.txid,data.sha256`)
+   hide: string             // Comma seperated list of dot-notated elements to explude from output (like `--hide=data.b64`). 
+   txo: object              // The inside of a config object to initiate a TXO output.
+   skip: number             // For piped data only: how many lines to skip before starting to execute.
+   cleanData: string        // If you need to trim or pick the info out from a datastructure. For txid it will identify and use the first valid 64 char hex string from the input. 
+                            // For rawtx it will use the longest hex string found in the input. 
+   pool: object;            // The inside of a config object to manage the pool size of rpc requests: See more about chiqq on npm.
+                              // Is merged with default: --pool=concurrency:5,retryMax:3,retryCooling:1000,retryFactor:2
 ```
 
 # Example
@@ -226,92 +226,93 @@ returns
 
 ```json
 {
-	"tx": {
-		"out": [
-			{
-				"split": [
-					[
-						{
-							"str": "19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut"
-						},
-						{
-							"size": 39011,
-							"sha256": "24066cd470667f0358ea48430c77e4e849cf637c8e491af2df14a260137d43d5"
-						},
-						{
-							"str": "text/html"
-						},
-						{
-							"str": "gzip"
-						},
-						{
-							"str": "https://www.bbc.com/news/technology-52388586"
-						}
-					],
-					[
-						{
-							"str": "1PuQa7K62MiKCtssSLKy1kh56WWU7MtUR5"
-						},
-						{
-							"str": "SET"
-						},
-						{
-							"str": "date"
-						},
-						{
-							"utc": "2020-04-23T22:27:25.906Z",
-							"str": "1587680845906"
-						},
-						{
-							"str": "source"
-						},
-						{
-							"str": "https://etched.page"
-						}
-					],
-					[
-						{
-							"str": "15PciHG22SNLQJXMoSUaWVi7WSqc7hCfva"
-						},
-						{
-							"str": "BITCOIN_ECDSA"
-						},
-						{
-							"str": "1ChMHjgVPHmbRsgBH9JoaCZbnEvVsXsSdx"
-						},
-						{
-							"b64": "IDjjAOmdyrv+TtF/4LTfbzKfZzEV84SG7Zh9791WW3opKU21o17jxiScJ3e4lSc1Pb83rci+6M6Ki7MMhgHoFdA="
-						}
-					]
-				]
-			},
-			{
-				"split": [
-					[
-						{
-							"opName": "OP_DUP",
-							"op": 118
-						},
-						{
-							"opName": "OP_HASH160",
-							"op": 169
-						},
-						{
-							"b64": "E6MFcxM1ofaigmfCWxo53zpEG2Y="
-						},
-						{
-							"opName": "OP_EQUALVERIFY",
-							"op": 136
-						},
-						{
-							"opName": "OP_CHECKSIG",
-							"op": 172
-						}
-					]
-				]
-			}
-		]
-	}
+  "tx": {
+    "out": [
+      {
+        "split": [
+          [
+            {
+              "str": "19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut"
+            },
+            {
+              "size": 39011,
+              "sha256": "24066cd470667f0358ea48430c77e4e849cf637c8e491af2df14a260137d43d5",
+              "uri": "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169.out.0.3"
+            },
+            {
+              "str": "text/html"
+            },
+            {
+              "str": "gzip"
+            },
+            {
+              "str": "https://www.bbc.com/news/technology-52388586"
+            }
+          ],
+          [
+            {
+              "str": "1PuQa7K62MiKCtssSLKy1kh56WWU7MtUR5"
+            },
+            {
+              "str": "SET"
+            },
+            {
+              "str": "date"
+            },
+            {
+              "utc": "2020-04-23T22:27:25.906Z",
+              "str": "1587680845906"
+            },
+            {
+              "str": "source"
+            },
+            {
+              "str": "https://etched.page"
+            }
+          ],
+          [
+            {
+              "str": "15PciHG22SNLQJXMoSUaWVi7WSqc7hCfva"
+            },
+            {
+              "str": "BITCOIN_ECDSA"
+            },
+            {
+              "str": "1ChMHjgVPHmbRsgBH9JoaCZbnEvVsXsSdx"
+            },
+            {
+              "b64": "IDjjAOmdyrv+TtF/4LTfbzKfZzEV84SG7Zh9791WW3opKU21o17jxiScJ3e4lSc1Pb83rci+6M6Ki7MMhgHoFdA="
+            }
+          ]
+        ]
+      },
+      {
+        "split": [
+          [
+            {
+              "opName": "OP_DUP",
+              "op": 118
+            },
+            {
+              "opName": "OP_HASH160",
+              "op": 169
+            },
+            {
+              "b64": "E6MFcxM1ofaigmfCWxo53zpEG2Y="
+            },
+            {
+              "opName": "OP_EQUALVERIFY",
+              "op": 136
+            },
+            {
+              "opName": "OP_CHECKSIG",
+              "op": 172
+            }
+          ]
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -321,220 +322,220 @@ An example using node with default parameters
 
 ```js
 import txho from 'txho'
-(async function () {
-	let result = await txho.from.txid(
-		'c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169'
-	);
-	console.log(result);
-})();
+let result = txho.from.txid('c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169');
+console.log(result);
 ```
 
 The output will be:
 
 ```json
 {
-	"tx": {
-		"txid": "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169",
-		"lockTime": 0,
-		"in": [
-			{
-				"seq": 4294967295,
-				"origin": {
-					"txid": "f2f85e6e75f00ebeed2d9b2ea99e7b314190ebd4a755faa157109bec26c41422",
-					"iOut": 1,
-					"address": "12nq8ZcrpY6tVkuPzuW9sg4a76feLMHUaN"
-				},
-				"payload": [
-					{
-						"b64": "MEQCIGxTaQAfazTcb+fGB3Ycs5a7okXgY3YU28Snz2kfX/niAiBi97GfrwART2kp43GmRw4KYJxpmEme79DHZIUxPFHkpEE="
-					},
-					{
-						"b64": "AzGNaeKeZmKIBy92zsQ+QkMCkQnrPyBd8fTXq1E3UrqN"
-					}
-				]
-			}
-		],
-		"out": [
-			{
-				"value": 0,
-				"payload": [
-					{
-						"opName": "OP_FALSE",
-						"op": 0
-					},
-					{
-						"opName": "OP_RETURN",
-						"op": 106
-					},
-					{
-						"b64": "MTlIeGlnVjRReUJ2M3RIcFFWY1VFUXlxMXB6WlZkb0F1dA=="
-					},
-					{
-						"size": 39011,
-						"sha256": "24066cd470667f0358ea48430c77e4e849cf637c8e491af2df14a260137d43d5"
-					},
-					{
-						"b64": "dGV4dC9odG1s"
-					},
-					{
-						"b64": "Z3ppcA=="
-					},
-					{
-						"b64": "aHR0cHM6Ly93d3cuYmJjLmNvbS9uZXdzL3RlY2hub2xvZ3ktNTIzODg1ODY="
-					},
-					{
-						"b64": "fA=="
-					},
-					{
-						"b64": "MVB1UWE3SzYyTWlLQ3Rzc1NMS3kxa2g1NldXVTdNdFVSNQ=="
-					},
-					{
-						"b64": "U0VU"
-					},
-					{
-						"b64": "ZGF0ZQ=="
-					},
-					{
-						"b64": "MTU4NzY4MDg0NTkwNg=="
-					},
-					{
-						"b64": "c291cmNl"
-					},
-					{
-						"b64": "aHR0cHM6Ly9ldGNoZWQucGFnZQ=="
-					},
-					{
-						"b64": "fA=="
-					},
-					{
-						"b64": "MTVQY2lIRzIyU05MUUpYTW9TVWFXVmk3V1NxYzdoQ2Z2YQ=="
-					},
-					{
-						"b64": "QklUQ09JTl9FQ0RTQQ=="
-					},
-					{
-						"b64": "MUNoTUhqZ1ZQSG1iUnNnQkg5Sm9hQ1pibkV2VnNYc1NkeA=="
-					},
-					{
-						"b64": "IDjjAOmdyrv+TtF/4LTfbzKfZzEV84SG7Zh9791WW3opKU21o17jxiScJ3e4lSc1Pb83rci+6M6Ki7MMhgHoFdA="
-					}
-				],
-				"split": [
-					[
-						{
-							"b64": "MTlIeGlnVjRReUJ2M3RIcFFWY1VFUXlxMXB6WlZkb0F1dA=="
-						},
-						{
-							"size": 39011,
-							"sha256": "24066cd470667f0358ea48430c77e4e849cf637c8e491af2df14a260137d43d5"
-						},
-						{
-							"b64": "dGV4dC9odG1s"
-						},
-						{
-							"b64": "Z3ppcA=="
-						},
-						{
-							"b64": "aHR0cHM6Ly93d3cuYmJjLmNvbS9uZXdzL3RlY2hub2xvZ3ktNTIzODg1ODY="
-						}
-					],
-					[
-						{
-							"b64": "MVB1UWE3SzYyTWlLQ3Rzc1NMS3kxa2g1NldXVTdNdFVSNQ=="
-						},
-						{
-							"b64": "U0VU"
-						},
-						{
-							"b64": "ZGF0ZQ=="
-						},
-						{
-							"b64": "MTU4NzY4MDg0NTkwNg=="
-						},
-						{
-							"b64": "c291cmNl"
-						},
-						{
-							"b64": "aHR0cHM6Ly9ldGNoZWQucGFnZQ=="
-						}
-					],
-					[
-						{
-							"b64": "MTVQY2lIRzIyU05MUUpYTW9TVWFXVmk3V1NxYzdoQ2Z2YQ=="
-						},
-						{
-							"b64": "QklUQ09JTl9FQ0RTQQ=="
-						},
-						{
-							"b64": "MUNoTUhqZ1ZQSG1iUnNnQkg5Sm9hQ1pibkV2VnNYc1NkeA=="
-						},
-						{
-							"b64": "IDjjAOmdyrv+TtF/4LTfbzKfZzEV84SG7Zh9791WW3opKU21o17jxiScJ3e4lSc1Pb83rci+6M6Ki7MMhgHoFdA="
-						}
-					]
-				]
-			},
-			{
-				"value": 925636,
-				"address": "12nq8ZcrpY6tVkuPzuW9sg4a76feLMHUaN",
-				"payload": [
-					{
-						"opName": "OP_DUP",
-						"op": 118
-					},
-					{
-						"opName": "OP_HASH160",
-						"op": 169
-					},
-					{
-						"b64": "E6MFcxM1ofaigmfCWxo53zpEG2Y="
-					},
-					{
-						"opName": "OP_EQUALVERIFY",
-						"op": 136
-					},
-					{
-						"opName": "OP_CHECKSIG",
-						"op": 172
-					}
-				],
-				"split": [
-					[
-						{
-							"opName": "OP_DUP",
-							"op": 118
-						},
-						{
-							"opName": "OP_HASH160",
-							"op": 169
-						},
-						{
-							"b64": "E6MFcxM1ofaigmfCWxo53zpEG2Y="
-						},
-						{
-							"opName": "OP_EQUALVERIFY",
-							"op": 136
-						},
-						{
-							"opName": "OP_CHECKSIG",
-							"op": 172
-						}
-					]
-				]
-			}
-		]
-	},
-	"data": [
-		{
-			"size": 39011,
-			"sha256": "24066cd470667f0358ea48430c77e4e849cf637c8e491af2df14a260137d43d5",
-			"b64": "H4sIAAAAAAACA+y9aWPb.... lots of data ....HTeOYdsnu5//4/hRkEpDO0AgA=",
-			"uri": "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169.out.0.3",
-			"txid": "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169",
-			"type": "out",
-			"iScript": 0,
-			"iChunk": 3
-		}
-	]
+  "tx": {
+    "txid": "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169",
+    "lockTime": 0,
+    "in": [
+      {
+        "seq": 4294967295,
+        "origin": {
+          "txid": "f2f85e6e75f00ebeed2d9b2ea99e7b314190ebd4a755faa157109bec26c41422",
+          "iOut": 1,
+          "address": "12nq8ZcrpY6tVkuPzuW9sg4a76feLMHUaN"
+        },
+        "payload": [
+          {
+            "b64": "MEQCIGxTaQAfazTcb+fGB3Ycs5a7okXgY3YU28Snz2kfX/niAiBi97GfrwART2kp43GmRw4KYJxpmEme79DHZIUxPFHkpEE="
+          },
+          {
+            "b64": "AzGNaeKeZmKIBy92zsQ+QkMCkQnrPyBd8fTXq1E3UrqN"
+          }
+        ]
+      }
+    ],
+    "out": [
+      {
+        "value": 0,
+        "payload": [
+          {
+            "opName": "OP_FALSE",
+            "op": 0
+          },
+          {
+            "opName": "OP_RETURN",
+            "op": 106
+          },
+          {
+            "b64": "MTlIeGlnVjRReUJ2M3RIcFFWY1VFUXlxMXB6WlZkb0F1dA=="
+          },
+          {
+            "size": 39011,
+            "sha256": "24066cd470667f0358ea48430c77e4e849cf637c8e491af2df14a260137d43d5",
+            "uri": "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169.out.0.3"
+          },
+          {
+            "b64": "dGV4dC9odG1s"
+          },
+          {
+            "b64": "Z3ppcA=="
+          },
+          {
+            "b64": "aHR0cHM6Ly93d3cuYmJjLmNvbS9uZXdzL3RlY2hub2xvZ3ktNTIzODg1ODY="
+          },
+          {
+            "b64": "fA=="
+          },
+          {
+            "b64": "MVB1UWE3SzYyTWlLQ3Rzc1NMS3kxa2g1NldXVTdNdFVSNQ=="
+          },
+          {
+            "b64": "U0VU"
+          },
+          {
+            "b64": "ZGF0ZQ=="
+          },
+          {
+            "b64": "MTU4NzY4MDg0NTkwNg=="
+          },
+          {
+            "b64": "c291cmNl"
+          },
+          {
+            "b64": "aHR0cHM6Ly9ldGNoZWQucGFnZQ=="
+          },
+          {
+            "b64": "fA=="
+          },
+          {
+            "b64": "MTVQY2lIRzIyU05MUUpYTW9TVWFXVmk3V1NxYzdoQ2Z2YQ=="
+          },
+          {
+            "b64": "QklUQ09JTl9FQ0RTQQ=="
+          },
+          {
+            "b64": "MUNoTUhqZ1ZQSG1iUnNnQkg5Sm9hQ1pibkV2VnNYc1NkeA=="
+          },
+          {
+            "b64": "IDjjAOmdyrv+TtF/4LTfbzKfZzEV84SG7Zh9791WW3opKU21o17jxiScJ3e4lSc1Pb83rci+6M6Ki7MMhgHoFdA="
+          }
+        ],
+        "split": [
+          [
+            {
+              "b64": "MTlIeGlnVjRReUJ2M3RIcFFWY1VFUXlxMXB6WlZkb0F1dA=="
+            },
+            {
+              "size": 39011,
+              "sha256": "24066cd470667f0358ea48430c77e4e849cf637c8e491af2df14a260137d43d5",
+              "uri": "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169.out.0.3"
+            },
+            {
+              "b64": "dGV4dC9odG1s"
+            },
+            {
+              "b64": "Z3ppcA=="
+            },
+            {
+              "b64": "aHR0cHM6Ly93d3cuYmJjLmNvbS9uZXdzL3RlY2hub2xvZ3ktNTIzODg1ODY="
+            }
+          ],
+          [
+            {
+              "b64": "MVB1UWE3SzYyTWlLQ3Rzc1NMS3kxa2g1NldXVTdNdFVSNQ=="
+            },
+            {
+              "b64": "U0VU"
+            },
+            {
+              "b64": "ZGF0ZQ=="
+            },
+            {
+              "b64": "MTU4NzY4MDg0NTkwNg=="
+            },
+            {
+              "b64": "c291cmNl"
+            },
+            {
+              "b64": "aHR0cHM6Ly9ldGNoZWQucGFnZQ=="
+            }
+          ],
+          [
+            {
+              "b64": "MTVQY2lIRzIyU05MUUpYTW9TVWFXVmk3V1NxYzdoQ2Z2YQ=="
+            },
+            {
+              "b64": "QklUQ09JTl9FQ0RTQQ=="
+            },
+            {
+              "b64": "MUNoTUhqZ1ZQSG1iUnNnQkg5Sm9hQ1pibkV2VnNYc1NkeA=="
+            },
+            {
+              "b64": "IDjjAOmdyrv+TtF/4LTfbzKfZzEV84SG7Zh9791WW3opKU21o17jxiScJ3e4lSc1Pb83rci+6M6Ki7MMhgHoFdA="
+            }
+          ]
+        ]
+      },
+      {
+        "value": 925636,
+        "address": "12nq8ZcrpY6tVkuPzuW9sg4a76feLMHUaN",
+        "payload": [
+          {
+            "opName": "OP_DUP",
+            "op": 118
+          },
+          {
+            "opName": "OP_HASH160",
+            "op": 169
+          },
+          {
+            "b64": "E6MFcxM1ofaigmfCWxo53zpEG2Y="
+          },
+          {
+            "opName": "OP_EQUALVERIFY",
+            "op": 136
+          },
+          {
+            "opName": "OP_CHECKSIG",
+            "op": 172
+          }
+        ],
+        "split": [
+          [
+            {
+              "opName": "OP_DUP",
+              "op": 118
+            },
+            {
+              "opName": "OP_HASH160",
+              "op": 169
+            },
+            {
+              "b64": "E6MFcxM1ofaigmfCWxo53zpEG2Y="
+            },
+            {
+              "opName": "OP_EQUALVERIFY",
+              "op": 136
+            },
+            {
+              "opName": "OP_CHECKSIG",
+              "op": 172
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "data": [
+    {
+      "size": 39011,
+      "sha256": "24066cd470667f0358ea48430c77e4e849cf637c8e491af2df14a260137d43d5",
+      "b64": "H4sIAAAAAAACA+y9aWPbOLIo.......................hRkEpDO0AgA=",
+      "txid": "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169",
+      "type": "out",
+      "iScript": 0,
+      "iChunk": 3
+    }
+  ],
+  "datamap": {
+    "c27d17bc9f427e5b287bee09437ef6d2749c321650a9670eb185d21873a65169.out.0.3": 0
+  }
 }
 ```
